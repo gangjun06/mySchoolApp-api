@@ -11,9 +11,10 @@ app.use(express.urlencoded({ extended: false }));
 
 //Routes
 app.use("/users", require("./routes/users"));
+app.use("/schedule", require('./routes/schedule'))
 
 // Start the Server
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 4000;
 app.listen(port, () => {
   console.log(`Server Start, ${port}port`);
 });

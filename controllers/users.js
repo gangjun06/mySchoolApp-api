@@ -22,8 +22,7 @@ module.exports = {
     try {
       user = await User.createUser(body);
     } catch (error) {
-      console.log(error)
-      return res.status(304).json({ error });
+      return res.status(305).json({ error });
     }
 
     // res.json({ user: user[0] });
@@ -34,20 +33,6 @@ module.exports = {
     const token = signToken(req.user.id);
     res.status(200).json({ token });
   },
-  // facebookOAuth: (req, res, next) => {
-  //   const token = signToken(req.user.f_id);
-  //   res.cookie("access_token", token, {
-  //     httpOnly: true,
-  //   });
-  //   res.status(200).json({ success: true });
-  // },
-  // linkFacebookOAuth: (req, res, next) => {
-  //   res.json({
-  //     success: true,
-  //     message: "Successfully unlinked account from Facebook",
-  //   });
-  // },
-  // unlinkFacebookOAuth: (req, res, next) => {},
   checkAuth: async (req, res, next) => {
     res.status(200).json({ success: true });
   },

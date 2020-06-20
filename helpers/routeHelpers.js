@@ -15,6 +15,21 @@ module.exports = {
       next();
     };
   },
+  validateQuery: (schema) => {
+    return (req, res, next) => {
+      const result = Joi.validate(req.query, schema);
+      if (result.error) {
+        return res.status(400).json(result.error);
+      }
+
+      if (!req.error) {
+        req.value = {};
+      }
+      req.value["body"] = result.value;
+      next();
+    }
+
+  },
   schemas: {
     authSchema: Joi.object().keys({
       name: Joi.string().required(),
@@ -28,5 +43,20 @@ module.exports = {
       class_number: Joi.number(),
       teacher: Joi.number().required()
     }),
+    schedule: Joi.object().keys({
+      text: Joi.string().required()
+    }),
+    scheduleRequest: Joi.object().keys({
+      id: Joi.number().required(),
+      day: Joi.number().required()
+    }),
+    scheduleItem: Joi.object().keys({
+      schedule_id: Joi.number().required(),
+      day: Joi.number().required(),
+      order: Joi.number().required(),
+      subject: Joi.string().required(),
+      teacher: Joi.string().required(),
+      description: Joi.string()
+    })
   },
 };
