@@ -17,7 +17,7 @@ module.exports = {
         const result = await DB("post")
             .join("user", "post.author", '=', 'user.id')
             .join("post_category", "post.category", '=', "post_category.id")
-            .select("user.name", "post_category.text", "post.title", "post.maintext", "post.anon", "post.only_mygrade", "post.deleted")
+            .select("post.id", "user.name", "post_category.text", "post.title", "post.maintext", "post.anon", "post.only_mygrade", "post.deleted")
         return result
     }
 
