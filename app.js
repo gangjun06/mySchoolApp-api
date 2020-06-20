@@ -11,6 +11,7 @@ app.use(express.urlencoded({ extended: false }));
 
 //Routes
 app.use("/users", require("./routes/users"));
+app.use("/posts", require('./routes/posts'))
 app.use("/schedule", require('./routes/schedule'))
 
 // Start the Server

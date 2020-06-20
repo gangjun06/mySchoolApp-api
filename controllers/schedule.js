@@ -8,7 +8,7 @@ module.exports = {
         } catch (e) {
             return res.status(305).json({ success: false, error: e })
         }
-        res.status(200).json({ data })
+        res.status(200).json({ list: data })
     },
     detail: async (req, res, next) => {
         let data;
@@ -18,7 +18,6 @@ module.exports = {
             return res.status(305).json({ success: false, error: e })
         }
         res.status(200).json({ list: data })
-
     },
     add: async (req, res, next) => {
         if (req.user.status !== 5) {

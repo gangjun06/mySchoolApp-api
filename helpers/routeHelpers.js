@@ -57,6 +57,17 @@ module.exports = {
       subject: Joi.string().required(),
       teacher: Joi.string().required(),
       description: Joi.string()
+    }),
+    category: Joi.object().keys({
+      text: Joi.string().required(),
+      admin_only: Joi.number().required()
+    }),
+    post: Joi.object().keys({
+      title: Joi.string().required(),
+      maintext: Joi.string(),
+      category: Joi.number().required(),
+      anon: Joi.number().required(),
+      only_mygrade: Joi.number().required()
     })
   },
 };
