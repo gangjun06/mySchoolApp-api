@@ -6,7 +6,7 @@ module.exports = {
         try {
             data = await Post.categories()
         } catch (e) {
-            return res.status(305).json({ success: false, error: e })
+            return res.status(500).json({ error: e })
         }
         res.status(200).json({ list: data })
     },
@@ -17,19 +17,19 @@ module.exports = {
         try {
             await Post.addCategory(req.body)
         } catch (e) {
-            return res.status(305).json({ error: e })
+            return res.status(500).json({ error: e })
         }
         res.status(200).json({})
     },
     addPost: async (req, res, next) => {
         if (req.user.status !== 5 && req.user.status !== 1) {
-            res.status(401).json({ error: "You Don't Have a permission" })
+            return res.status(401).json({ error: "You Don't Have a permission" })
         }
         req.body.author = req.user.id
         try {
             await Post.addPost(req.body)
         } catch (e) {
-            return res.status(305).json({ error: e })
+            return res.status(500).json({ error: e })
         }
         res.status(200).json({})
     },
@@ -38,7 +38,28 @@ module.exports = {
         try {
             list = await Post.posts()
         } catch (e) {
-            return res.status(305).json({ error: e })
+            return res.status(500).json({ error: e })
+        }
+        res.status(200).json({ list })
+    },
+    addComment: async (req, res, next) => {
+        if (req.user.status !== 5 && req.user.status !== 1) {
+            return res.status(401).json({ error: "You Don't Have a permission" })
+        }
+        req.body.author = req.user.id
+        try {
+            await Post.addComment(req.body)
+        } catch (e) {
+            return res.status(500).json({ error: e })
+        }
+        res.status(200).json({})
+    },
+    getComments: async (req, res, next) => {
+        let list;
+        try {
+            list = await Post.comments(req.query.id)
+        } catch (e) {
+            return res.status(500).json({ error: e })
         }
         res.status(200).json({ list })
     }

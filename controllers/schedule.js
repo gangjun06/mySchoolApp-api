@@ -15,7 +15,7 @@ module.exports = {
         try {
             data = await Schedule.schedule(req.query)
         } catch (e) {
-            return res.status(305).json({ success: false, error: e })
+            return res.status(500).json({ success: false, error: e })
         }
         res.status(200).json({ list: data })
     },
@@ -27,7 +27,7 @@ module.exports = {
         try {
             await Schedule.addSchedule(req.body)
         } catch (e) {
-            return res.status(305).json({ error: e })
+            return res.status(500).json({ error: e })
         }
 
         res.status(200).json({})
@@ -43,7 +43,7 @@ module.exports = {
         try {
             await Schedule.addScheduleItem(req.body)
         } catch (e) {
-            return res.status(305).json({ error: e })
+            return res.status(500).json({ error: e })
         }
 
         res.status(200).json({})

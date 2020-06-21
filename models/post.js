@@ -18,6 +18,23 @@ module.exports = {
             .join("user", "post.author", '=', 'user.id')
             .join("post_category", "post.category", '=', "post_category.id")
             .select("post.id", "user.name", "post_category.text", "post.title", "post.maintext", "post.anon", "post.only_mygrade", "post.deleted")
+            .orderBy("post.id", "desc")
+            .limit(30)
+        return result
+    },
+    addComment: async (body) => {
+        const result = await DB("post_comment").insert({ ...body, timestamp: DB.fn.now() }).catch(e => {
+            throw new Error(e)
+        })
+        return result[0]
+    },
+    comments: async (id) => {
+        const result = await DB("post")
+            .where('post.id', '=', id)
+            .join("post_comment", 'post.id', '=', 'post_comment.post_id')
+            .join("user", "user.id", '=', 'post_comment.author')
+            .select("post_comment.id", 'post_comment.parent', 'post_comment.timestamp', 'post_comment.maintext', 'user.name')
+            .orderBy("timestamp")
         return result
     }
 

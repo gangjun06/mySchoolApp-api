@@ -1,5 +1,5 @@
 const router = require("express-promise-router")();
-const { validateBody, schemas } = require("../helpers/routeHelpers");
+const { validateBody, validateQuery, schemas } = require("../helpers/routeHelpers");
 const PostController = require("../controllers/posts");
 const passport = require("passport");
 const passportConf = require("../helpers/passport");
@@ -12,5 +12,8 @@ router.route("/").post(validateBody(schemas.post), passportJWT, PostController.a
 
 router.route("/category").get(PostController.getCategory)
 router.route("/category").post(validateBody(schemas.category), passportJWT, PostController.addCategory);
+
+router.route("/comment").get(validateQuery(schemas.commentQuery), PostController.getComments)
+router.route("/comment").post(validateBody(schemas.comment), passportJWT, PostController.addComment)
 
 module.exports = router;

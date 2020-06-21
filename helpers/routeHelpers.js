@@ -68,6 +68,14 @@ module.exports = {
       category: Joi.number().required(),
       anon: Joi.number().required(),
       only_mygrade: Joi.number().required()
+    }),
+    comment: Joi.object().keys({
+      post_id: Joi.number().required(),
+      parent: Joi.number(),
+      maintext: Joi.string().required()
+    }),
+    commentQuery: Joi.object().keys({
+      id: Joi.number().required()
     })
   },
 };
