@@ -34,6 +34,6 @@ module.exports = {
     res.status(200).json({ token });
   },
   checkAuth: async (req, res, next) => {
-    res.status(200).json({ success: true });
+    res.status(200).json({ success: true, status: req.user.status });
   },
 };

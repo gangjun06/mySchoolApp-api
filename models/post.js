@@ -36,7 +36,7 @@ module.exports = {
             .join("post_comment", 'post.id', '=', 'post_comment.post_id')
             .join("user", "user.id", '=', 'post_comment.author')
             .select("post_comment.id", 'post_comment.parent', 'post_comment.timestamp', 'post_comment.maintext', 'user.name')
-            .orderBy("timestamp")
+            .orderBy("timestamp", "desc")
         return result
     }
 }
