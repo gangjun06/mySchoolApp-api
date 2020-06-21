@@ -1,6 +1,6 @@
 const { db } = require("./../config");
 
-module.exports = require("knex")({
+const knex = require("knex")({
   client: "mysql",
   connection: {
     host: db.url,
@@ -9,3 +9,7 @@ module.exports = require("knex")({
     database: db.database,
   },
 });
+const setupPaginator = require('knex-paginator');
+setupPaginator(knex);
+
+module.exports = knex

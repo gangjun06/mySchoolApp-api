@@ -7,7 +7,7 @@ const passportConf = require("../helpers/passport");
 const passportSingIn = passport.authenticate("local", { session: false });
 const passportJWT = passport.authenticate("jwt", { session: false });
 
-router.route('/').get(PostController.getPosts)
+router.route('/').get(validateQuery(schemas.postRequest), PostController.getPosts)
 router.route("/").post(validateBody(schemas.post), passportJWT, PostController.addPost)
 
 router.route("/category").get(PostController.getCategory)

@@ -76,6 +76,9 @@ module.exports = {
     }),
     commentQuery: Joi.object().keys({
       id: Joi.number().required()
+    }),
+    postRequest: Joi.object().keys({
+      start: Joi.number().required()
     })
   },
 };

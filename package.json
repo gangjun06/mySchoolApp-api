@@ -11,6 +11,7 @@
     "joi": "^14.3.1",
     "jsonwebtoken": "^8.5.1",
     "knex": "^0.21.1",
+    "knex-paginator": "^2.0.0",
     "moment": "^2.27.0",
     "morgan": "^1.10.0",
     "mysql": "^2.18.1",
