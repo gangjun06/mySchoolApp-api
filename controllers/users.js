@@ -43,13 +43,13 @@ module.exports = {
     } catch (error) {
       return res.status(500).json({ error });
     }
-    return res
-      .status(200)
-      .json({
-        ...result,
-        name: req.user.name,
-        grade: req.user.grade,
-        class_number: req.user.class_number,
-      });
+    return res.status(200).json({
+      ...result,
+      name: req.user.name,
+      grade: req.user.grade,
+      class: req.user.class,
+      teacher: req.user.teacher,
+      class_number: req.user.class_number,
+    });
   },
 };
