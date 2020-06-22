@@ -67,7 +67,6 @@ module.exports = {
       maintext: Joi.string(),
       category: Joi.number().required(),
       anon: Joi.number().required(),
-      only_mygrade: Joi.number().required()
     }),
     comment: Joi.object().keys({
       post_id: Joi.number().required(),

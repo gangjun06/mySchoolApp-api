@@ -21,4 +21,6 @@ router
 
 router.route("/status").get(passportJWT, UserController.checkAuth);
 
+router.route("/profile").get(passportJWT, UserController.profile);
+
 module.exports = router;

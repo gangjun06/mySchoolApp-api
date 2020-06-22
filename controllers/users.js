@@ -36,4 +36,13 @@ module.exports = {
   checkAuth: async (req, res, next) => {
     res.status(200).json({ success: true, status: req.user.status });
   },
+  profile: async (req, res, next) => {
+    let result;
+    try {
+      result = await User.userInfo(req.user.id);
+    } catch (error) {
+      return res.status(500).json({ error });
+    }
+    return res.status(200).json({ ...result });
+  },
 };
