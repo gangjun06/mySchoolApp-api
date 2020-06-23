@@ -17,11 +17,10 @@ module.exports = {
         const result = await DB("post")
             .join("user", "post.author", '=', 'user.id')
             .join("post_category", "post.category", '=', "post_category.id")
-            .select("post.id", "user.name", "post_category.text", "post.title", "post.maintext", "post.anon", "post.only_mygrade", "post.deleted", "post.timestamp")
+            .select("post.id", "user.name", "post_category.text", "post.title", "post.maintext", "post.anon", "post.deleted", "post.timestamp")
             .orderBy("post.id", "desc")
             .limit(30)
             // .paginate(20, 1, true)
-        console.log(result)
         return result
     },
     addComment: async (body) => {
