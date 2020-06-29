@@ -36,7 +36,7 @@ module.exports = {
     getPosts: async (req, res, next) => {
         let list
         try {
-            list = await Post.posts(req.query.start)
+            list = await Post.posts(req.query.category)
         } catch (e) {
             return res.status(500).json({ error: e })
         }

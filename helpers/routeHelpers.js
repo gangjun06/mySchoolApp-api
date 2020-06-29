@@ -27,8 +27,7 @@ module.exports = {
       }
       req.value["body"] = result.value;
       next();
-    }
-
+    };
   },
   schemas: {
     authSchema: Joi.object().keys({
@@ -41,14 +40,14 @@ module.exports = {
       grade: Joi.number(),
       class: Joi.number(),
       class_number: Joi.number(),
-      teacher: Joi.number().required()
+      teacher: Joi.number().required(),
     }),
     schedule: Joi.object().keys({
-      text: Joi.string().required()
+      text: Joi.string().required(),
     }),
     scheduleRequest: Joi.object().keys({
       id: Joi.number().required(),
-      day: Joi.number().required()
+      day: Joi.number().required(),
     }),
     scheduleItem: Joi.object().keys({
       schedule_id: Joi.number().required(),
@@ -56,11 +55,11 @@ module.exports = {
       order: Joi.number().required(),
       subject: Joi.string().required(),
       teacher: Joi.string().required(),
-      description: Joi.string()
+      description: Joi.string(),
     }),
     category: Joi.object().keys({
       text: Joi.string().required(),
-      admin_only: Joi.number().required()
+      admin_only: Joi.number().required(),
     }),
     post: Joi.object().keys({
       title: Joi.string().required(),
@@ -71,13 +70,14 @@ module.exports = {
     comment: Joi.object().keys({
       post_id: Joi.number().required(),
       parent: Joi.number(),
-      maintext: Joi.string().required()
+      maintext: Joi.string().required(),
     }),
     commentQuery: Joi.object().keys({
-      id: Joi.number().required()
+      id: Joi.number().required(),
     }),
     postRequest: Joi.object().keys({
-      start: Joi.number().required()
-    })
+      start: Joi.number(),
+      category: Joi.number(),
+    }),
   },
 };

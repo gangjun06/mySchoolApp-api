@@ -13,14 +13,26 @@ module.exports = {
         const result = await DB("post").insert({ ...body, deleted: 0, timestamp: DB.fn.now() })
         return result[0]
     },
-    posts: async (start) => {
-        const result = await DB("post")
+    posts: async (category) => {
+        let result;
+        if(category){
+            result = await DB("post")
+            .join("user", "post.author", '=', 'user.id')
+            .join("post_category", "post.category", '=', "post_category.id")
+            .select("post.id", "user.name", "post_category.text", "post.title", "post.maintext", "post.anon", "post.deleted", "post.timestamp")
+            .orderBy("post.id", "desc")
+            .where("post.category", "=", category)
+            .limit(30)
+            // .paginate(20, 1, true)
+        }else{
+            result = await DB("post")
             .join("user", "post.author", '=', 'user.id')
             .join("post_category", "post.category", '=', "post_category.id")
             .select("post.id", "user.name", "post_category.text", "post.title", "post.maintext", "post.anon", "post.deleted", "post.timestamp")
             .orderBy("post.id", "desc")
             .limit(30)
             // .paginate(20, 1, true)
+        }
         return result
     },
     addComment: async (body) => {

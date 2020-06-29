@@ -11,6 +11,7 @@ module.exports = {
         const result = await DB("schedule")
             .join("schedule_item", 'schedule.id', '=', 'schedule_item.schedule_id')
             .where('schedule_item.day', '=', day)
+            .where('schedule_item.schedule_id', '=', id)
             .select("schedule_item.subject", "schedule_item.teacher", "schedule_item.description", "schedule_item.order")
             .orderBy('schedule_item.order')
         return result
