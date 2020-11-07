@@ -1,0 +1,7 @@
+[server]
+port = 9096
+debug = false
+jwtSecret = "asdf"
+
+[db]
+useSqlite = true
