@@ -5,3 +5,7 @@ jwtSecret = "asdf"
 
 [db]
 useSqlite = true
+
+[coolsms]
+apiKey = ""
+apiSecret = ""

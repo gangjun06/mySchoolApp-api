@@ -16,4 +16,9 @@ type Config struct {
 			DBName   string
 		}
 	}
+	CoolSMS struct {
+		ApiKey    string
+		ApiSecret string
+		Sender    string
+	}
 }
