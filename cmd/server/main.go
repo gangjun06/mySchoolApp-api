@@ -2,8 +2,10 @@ package main
 
 import (
 	"log"
+	"math/rand"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
@@ -14,6 +16,7 @@ import (
 )
 
 func main() {
+	rand.Seed(time.Now().Unix())
 	conf.Init()
 	port := conf.Get().Server.Port
 
