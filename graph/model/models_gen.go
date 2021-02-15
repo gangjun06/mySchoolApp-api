@@ -2,6 +2,12 @@
 
 package model
 
+import (
+	"fmt"
+	"io"
+	"strconv"
+)
+
 type ProfileDetail interface {
 	IsProfileDetail()
 }
@@ -19,18 +25,20 @@ type OfficalsProfileInput struct {
 }
 
 type Profile struct {
-	ID       string        `json:"id"`
+	ID       ObjectID      `json:"id"`
 	Name     string        `json:"name"`
 	Nickname string        `json:"nickname"`
 	Phone    Phone         `json:"phone"`
 	Detail   ProfileDetail `json:"detail"`
+	Status   UserStatus    `json:"status"`
 }
 
 type SignUpInput struct {
-	Name      string  `json:"name"`
-	Nickname  *string `json:"nickname"`
-	Password  string  `json:"password"`
-	PhoneCode string  `json:"phoneCode"`
+	Name     string  `json:"name"`
+	Nickname *string `json:"nickname"`
+	Password string  `json:"password"`
+	Phone    string  `json:"phone"`
+	Detail   string  `json:"detail"`
 }
 
 type StudentProfile struct {
@@ -55,4 +63,47 @@ func (TeacherProfile) IsProfileDetail() {}
 
 type TeacherProfileInput struct {
 	Subject []string `json:"subject"`
+}
+
+type UserStatus string
+
+const (
+	UserStatusWait UserStatus = "WAIT"
+	UserStatusUser UserStatus = "USER"
+	UserStatusBan  UserStatus = "BAN"
+)
+
+var AllUserStatus = []UserStatus{
+	UserStatusWait,
+	UserStatusUser,
+	UserStatusBan,
+}
+
+func (e UserStatus) IsValid() bool {
+	switch e {
+	case UserStatusWait, UserStatusUser, UserStatusBan:
+		return true
+	}
+	return false
+}
+
+func (e UserStatus) String() string {
+	return string(e)
+}
+
+func (e *UserStatus) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = UserStatus(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid UserStatus", str)
+	}
+	return nil
+}
+
+func (e UserStatus) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
 }

@@ -12,18 +12,20 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
-var mClient *mongo.Client
-var mdb *mongo.Database
+var client *mongo.Client
+var db *mongo.Database
 
-var mUser *mongo.Collection
+var User *mongo.Collection
 
 func Init() {
-	client, err := mongo.NewClient(options.Client().ApplyURI(conf.Get().MongoDB))
+	var err error
+	client, err = mongo.NewClient(options.Client().ApplyURI(conf.Get().MongoDB))
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 	if err := client.Connect(ctx); err != nil {
 		log.Fatal(err)
 	}
@@ -32,14 +34,13 @@ func Init() {
 		log.Fatal(err)
 	}
 
-	mClient = client
-	mdb = client.Database("osang")
-	mUser = mdb.Collection("user")
+	db = client.Database("osang")
+	User = db.Collection("user")
 
-	_, err = mUser.Indexes().CreateOne(
+	_, err = User.Indexes().CreateOne(
 		context.Background(),
 		mongo.IndexModel{
-			Keys:    bson.M{"email": 1},
+			Keys:    bson.M{"phone": 1},
 			Options: options.Index().SetUnique(true),
 		},
 	)

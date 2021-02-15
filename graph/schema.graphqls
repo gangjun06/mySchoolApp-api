@@ -1,11 +1,18 @@
 union ProfileDetail = StudentProfile | TeacherProfile | OfficalsProfile
 
+enum UserStatus {
+  WAIT
+  USER
+  BAN
+}
+
 type Profile {
-  id: ID!
+  id: ObjectID!
   name: String!
   nickname: String!
   phone: Phone!
   detail: ProfileDetail!
+  status: UserStatus!
 }
 
 type StudentProfile {
@@ -29,7 +36,8 @@ input TeacherProfileInput {
 }
 
 type OfficalsProfile {
-  role: String!  description: String!
+  role: String!
+  description: String!
 }
 
 input OfficalsProfileInput {
@@ -41,19 +49,23 @@ input SignUpInput {
   name: String!
   nickname: String
   password: String!
-  phoneCode: String!
+  phone: SignUpPhoneCode!
+  detail: ProfileCode!
 }
 
 type Query {
   myProfile: Profile
-  isValidPhoneVerifyCode(number: Phone!, code: String!): Boolean!
 }
 
 type Mutation {
   signIn(phone: String!, password: String!): String!
   verifyPhone(number: Phone!): String!
-  setProfile(student:StudentProfileInput, teacher:TeacherProfileInput, officals:OfficalsProfileInput): String!
-  signUp(basic: SignUpInput!, detail: String!): Profile
+  checkVerifyPhoneCode(number: Phone!, code: String!): SignUpPhoneCode!
+  setProfile(student:StudentProfileInput, teacher:TeacherProfileInput, officals:OfficalsProfileInput): ProfileCode!
+  signUp(input: SignUpInput!): Profile
 }
 
 scalar Phone
+scalar SignUpPhoneCode
+scalar ProfileCode 
+scalar ObjectID

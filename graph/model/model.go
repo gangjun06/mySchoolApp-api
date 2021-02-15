@@ -6,6 +6,8 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 var (
@@ -27,7 +29,8 @@ func isPhoneValid(p string) bool {
 type Phone string
 
 func (p Phone) MarshalGQL(w io.Writer) {
-	w.Write([]byte(p))
+	fmt.Println("Marshal: ", p)
+	io.WriteString(w, strconv.Quote(string(p)))
 }
 
 func (p *Phone) UnmarshalGQL(v interface{}) error {
@@ -44,6 +47,26 @@ func (p *Phone) UnmarshalGQL(v interface{}) error {
 			return ErrNotCorrectInput
 		}
 		*p = Phone(str)
+		return nil
+	default:
+		return ErrNotCorrectInput
+	}
+}
+
+type ObjectID primitive.ObjectID
+
+func (o ObjectID) MarshalGQL(w io.Writer) {
+	io.WriteString(w, strconv.Quote(primitive.ObjectID(o).Hex()))
+}
+
+func (o *ObjectID) UnmarshalGQL(v interface{}) error {
+	switch v := v.(type) {
+	case string:
+		result, err := primitive.ObjectIDFromHex(v)
+		if err != nil {
+			return ErrNotCorrectInput
+		}
+		*o = ObjectID(result)
 		return nil
 	default:
 		return ErrNotCorrectInput

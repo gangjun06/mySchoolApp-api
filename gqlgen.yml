@@ -46,6 +46,9 @@ models:
   Phone:
     model:
       - model.Phone
+  ObjectID:
+    model:
+      - model.ObjectID
   ID:
     model:
       - github.com/99designs/gqlgen/graphql.ID
