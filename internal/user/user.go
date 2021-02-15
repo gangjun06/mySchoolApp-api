@@ -2,10 +2,10 @@ package user
 
 import (
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/muesli/cache2go"
+	"github.com/osang-school/backend/internal/send"
 	"github.com/osang-school/backend/internal/utils"
 )
 
@@ -18,31 +18,38 @@ var (
 	ErrTooManyVerifyReq = errors.New("Too Many Verify Req")
 )
 
-func PhoneVerifyCode(ip, phone string) (string, error) {
+// SendMax per day
+const SendMax = 5
+
+func PhoneVerifyCode(ip, phone string) error {
 	cache := cache2go.Cache("phoneVerify")
 	cnt := 0
 	if res, err := cache.Value("cnt:" + ip); err == nil {
 		cnt = res.Data().(int)
-		if cnt > 3 {
-			return "", ErrTooManyVerifyReq
+		if cnt >= SendMax {
+			return ErrTooManyVerifyReq
 		}
 	}
 
 	code := utils.CreateRandomNum(6)
 	cache.Add(phone, time.Minute*5, code)
 
+	if err := send.Sms(phone, "오상중학교 회원가입 본인확인 인증코드는 ["+code+"]입니다."); err != nil {
+		return err
+	}
+
 	cnt++
 	cache.Add("cnt:"+ip, utils.TimeLeftUntilMidnight(), cnt)
-	return code, nil
+	return nil
 }
 
-func PhoneVerifyCheck(phone, code string) error {
+func PhoneVerifyCheck(phone, code string) (bool, error) {
 	cache := cache2go.Cache("phoneVerify")
 	res, err := cache.Value(phone)
 	if err != nil {
-		return err
+		return false, err
 	} else if res.Data().(string) != code {
-		return fmt.Errorf("Code is not correct")
+		return false, nil
 	}
-	return nil
+	return true, nil
 }

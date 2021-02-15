@@ -2,10 +2,6 @@
 
 package model
 
-type Profile interface {
-	IsProfile()
-}
-
 type ProfileDetail interface {
 	IsProfileDetail()
 }
@@ -20,6 +16,14 @@ func (OfficalsProfile) IsProfileDetail() {}
 type OfficalsProfileInput struct {
 	Role        string  `json:"role"`
 	Description *string `json:"description"`
+}
+
+type Profile struct {
+	ID       string        `json:"id"`
+	Name     string        `json:"name"`
+	Nickname string        `json:"nickname"`
+	Phone    Phone         `json:"phone"`
+	Detail   ProfileDetail `json:"detail"`
 }
 
 type SignUpInput struct {

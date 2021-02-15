@@ -1,6 +1,6 @@
 union ProfileDetail = StudentProfile | TeacherProfile | OfficalsProfile
 
-interface Profile {
+type Profile {
   id: ID!
   name: String!
   nickname: String!
@@ -29,8 +29,7 @@ input TeacherProfileInput {
 }
 
 type OfficalsProfile {
-  role: String!
-  description: String!
+  role: String!  description: String!
 }
 
 input OfficalsProfileInput {
@@ -43,6 +42,11 @@ input SignUpInput {
   nickname: String
   password: String!
   phoneCode: String!
+}
+
+type Query {
+  myProfile: Profile
+  isValidPhoneVerifyCode(number: Phone!, code: String!): Boolean!
 }
 
 type Mutation {

@@ -18,7 +18,7 @@ import (
 func Sms(to, text string) error {
 	config := conf.Get().CoolSMS
 
-	if config.Enable {
+	if !config.Enable {
 		fmt.Println(to, " >> ", text)
 		return nil
 	}
@@ -32,13 +32,13 @@ func Sms(to, text string) error {
 	}
 	signature := hex.EncodeToString(h.Sum(nil))
 
-	header := fmt.Sprintf("HMAC-SHA256 apiKey=%s, date=%s, salt=%s, signature=%s", config.Secret, time, salt, signature)
+	header := fmt.Sprintf("HMAC-SHA256 apiKey=%s, date=%s, salt=%s, signature=%s", config.ApiKey, time, salt, signature)
 
 	bodyBytes, err := json.Marshal(map[string]interface{}{
 		"message": map[string]interface{}{
 			"to":   to,
 			"from": config.From,
-			"text": text,
+			"text": "[Web발신]\n" + text,
 			"type": "SMS",
 		},
 	})
@@ -69,6 +69,8 @@ func Sms(to, text string) error {
 	if err := json.Unmarshal(bytes, &data); err != nil {
 		return err
 	}
+
+	fmt.Printf("%+v\n", data)
 
 	return nil
 }

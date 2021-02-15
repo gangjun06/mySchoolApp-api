@@ -8,7 +8,8 @@ import (
 
 func TimeLeftUntilMidnight() time.Duration {
 	t := time.Now().AddDate(0, 0, 1)
-	midnight := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, nil)
+	timezone, _ := time.LoadLocation("Asia/Seoul")
+	midnight := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, timezone)
 	return time.Now().Sub(midnight)
 }
 
