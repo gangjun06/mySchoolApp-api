@@ -2,33 +2,53 @@
 
 package model
 
-type Link struct {
-	ID      string `json:"id"`
-	Title   string `json:"title"`
-	Address string `json:"address"`
-	User    *User  `json:"user"`
+type Profile interface {
+	IsProfile()
 }
 
-type Login struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
+type ProfileDetail interface {
+	IsProfileDetail()
 }
 
-type NewLink struct {
-	Title   string `json:"title"`
-	Address string `json:"address"`
+type OfficalsProfile struct {
+	Role        string `json:"role"`
+	Description string `json:"description"`
 }
 
-type NewUser struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
+func (OfficalsProfile) IsProfileDetail() {}
+
+type OfficalsProfileInput struct {
+	Role        string  `json:"role"`
+	Description *string `json:"description"`
 }
 
-type RefreshTokenInput struct {
-	Token string `json:"token"`
+type SignUpInput struct {
+	Name      string  `json:"name"`
+	Nickname  *string `json:"nickname"`
+	Password  string  `json:"password"`
+	PhoneCode string  `json:"phoneCode"`
 }
 
-type User struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
+type StudentProfile struct {
+	Grade  int `json:"grade"`
+	Class  int `json:"class"`
+	Number int `json:"number"`
+}
+
+func (StudentProfile) IsProfileDetail() {}
+
+type StudentProfileInput struct {
+	Grade  int `json:"grade"`
+	Class  int `json:"class"`
+	Number int `json:"number"`
+}
+
+type TeacherProfile struct {
+	Subject []string `json:"subject"`
+}
+
+func (TeacherProfile) IsProfileDetail() {}
+
+type TeacherProfileInput struct {
+	Subject []string `json:"subject"`
 }

@@ -3,8 +3,7 @@ package neis
 import (
 	"bytes"
 	"crypto/rand"
-	"crypto/rsa"
-	"crypto/x509"
+	"crypto/rsa" "crypto/x509"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"

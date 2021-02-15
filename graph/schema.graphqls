@@ -1,43 +1,55 @@
-type Link {
-  id: ID!
-  title: String!
-  address: String!
-  user: User!
-}
+union ProfileDetail = StudentProfile | TeacherProfile | OfficalsProfile
 
-type User {
+interface Profile {
   id: ID!
   name: String!
+  nickname: String!
+  phone: Phone!
+  detail: ProfileDetail!
 }
 
-type Query {
-  links: [Link!]!
+type StudentProfile {
+  grade: Int!
+  class: Int!
+  number: Int!
 }
 
-input NewLink {
-  title: String!
-  address: String!
+input StudentProfileInput {
+  grade: Int!
+  class: Int!
+  number: Int!
 }
 
-input RefreshTokenInput{
-  token: String!
+type TeacherProfile {
+  subject: [String!]!
 }
 
-input NewUser {
-  username: String!
+input TeacherProfileInput {
+  subject: [String!]!
+}
+
+type OfficalsProfile {
+  role: String!
+  description: String!
+}
+
+input OfficalsProfileInput {
+  role: String!
+  description: String
+}
+
+input SignUpInput {
+  name: String!
+  nickname: String
   password: String!
-}
-
-input Login {
-  username: String!
-  password: String!
+  phoneCode: String!
 }
 
 type Mutation {
-  createLink(input: NewLink!): Link!
-  createUser(input: NewUser!): String!
-  login(input: Login!): String!
-  # we'll talk about this in authentication section
-  refreshToken(input: RefreshTokenInput!): String!
+  signIn(phone: String!, password: String!): String!
+  verifyPhone(number: Phone!): String!
+  setProfile(student:StudentProfileInput, teacher:TeacherProfileInput, officals:OfficalsProfileInput): String!
+  signUp(basic: SignUpInput!, detail: String!): Profile
 }
 
+scalar Phone
