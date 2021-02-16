@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"math/rand"
 	"net/http"
@@ -30,12 +31,14 @@ func main() {
 	srv.SetErrorPresenter(func(ctx context.Context, e error) *gqlerror.Error {
 
 		err := graphql.DefaultErrorPresenter(ctx, e)
-		if v, ok := e.(*errors.Error); ok {
+		if parsed, ok := errors.Parse(fmt.Errorf(err.Message)); ok {
+			v := parsed.(*errors.Error)
 			err.Message = v.Message
-			err.Extensions["code"] = v.Code
-			err.Extensions["description"] = v.Description()
+			err.Extensions = map[string]interface{}{
+				"code":        v.Code,
+				"description": v.Description(),
+			}
 		}
-
 		return err
 	})
 

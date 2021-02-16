@@ -1,11 +1,11 @@
 package user
 
 import (
-	"errors"
 	"fmt"
 	"time"
 
 	"github.com/muesli/cache2go"
+	"github.com/osang-school/backend/graph/errors"
 	"github.com/osang-school/backend/graph/model"
 	"github.com/osang-school/backend/internal/db/mongodb"
 	"github.com/osang-school/backend/internal/send"
@@ -56,10 +56,6 @@ const (
 	StatusBan
 )
 
-var (
-	ErrTooManyVerifyReq = errors.New("Too Many Verify Req")
-)
-
 // SendMax per day
 const SendMax = 5
 
@@ -70,7 +66,7 @@ func PhoneVerifyCode(ip, phone string) error {
 	if res, err := cache.Value("cnt:" + ip); err == nil {
 		cnt = res.Data().(int)
 		if cnt >= SendMax {
-			return ErrTooManyVerifyReq
+			return errors.New(errors.ErrTooManyReq, "request for verify beyond the limit")
 		}
 	}
 
@@ -145,6 +141,19 @@ func SignUp(user *User) (primitive.ObjectID, error) {
 		return primitive.NilObjectID, err
 	}
 	return result.InsertedID.(primitive.ObjectID), err
+}
+
+// GetUserByPhone
+func GetuserByPhone(phone model.Phone) (*User, error) {
+	filter := bson.M{"phone": phone}
+	var result User
+	if err := mongodb.User.FindOne(nil, filter).Decode(&result); err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, errors.New(errors.ErrNotFound, "user not found")
+		}
+		return nil, errors.New(errors.ErrServer, err.Error())
+	}
+	return &result, nil
 }
 
 func DetailToUnion(d interface{}) model.ProfileDetail {
