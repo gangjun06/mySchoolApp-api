@@ -11,6 +11,7 @@ import (
 	"github.com/muesli/cache2go"
 	"github.com/osang-school/backend/graph/generated"
 	"github.com/osang-school/backend/graph/model"
+	"github.com/osang-school/backend/internal/neis"
 	"github.com/osang-school/backend/internal/user"
 	"github.com/osang-school/backend/internal/utils"
 )
@@ -119,6 +120,13 @@ func (r *mutationResolver) SignUp(ctx context.Context, input model.SignUpInput) 
 
 func (r *queryResolver) MyProfile(ctx context.Context) (*model.Profile, error) {
 	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *queryResolver) Cafeteria(ctx context.Context, filter *model.CafeteriaFilter) ([]*model.Cafeteria, error) {
+	if filter == nil {
+		filter = &model.CafeteriaFilter{}
+	}
+	return neis.GetCafeteria(filter)
 }
 
 // Mutation returns generated.MutationResolver implementation.

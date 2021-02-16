@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"strconv"
 	"sync"
+	"sync/atomic"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/introspection"
@@ -43,6 +44,15 @@ type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
+	Cafeteria struct {
+		Calorie  func(childComplexity int) int
+		Content  func(childComplexity int) int
+		Date     func(childComplexity int) int
+		Nutrient func(childComplexity int) int
+		Origin   func(childComplexity int) int
+		Type     func(childComplexity int) int
+	}
+
 	Mutation struct {
 		CheckVerifyPhoneCode func(childComplexity int, number model.Phone, code string) int
 		SetProfile           func(childComplexity int, student *model.StudentProfileInput, teacher *model.TeacherProfileInput, officals *model.OfficalsProfileInput) int
@@ -66,6 +76,7 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
+		Cafeteria func(childComplexity int, filter *model.CafeteriaFilter) int
 		MyProfile func(childComplexity int) int
 	}
 
@@ -89,6 +100,7 @@ type MutationResolver interface {
 }
 type QueryResolver interface {
 	MyProfile(ctx context.Context) (*model.Profile, error)
+	Cafeteria(ctx context.Context, filter *model.CafeteriaFilter) ([]*model.Cafeteria, error)
 }
 
 type executableSchema struct {
@@ -105,6 +117,48 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	ec := executionContext{nil, e}
 	_ = ec
 	switch typeName + "." + field {
+
+	case "Cafeteria.calorie":
+		if e.complexity.Cafeteria.Calorie == nil {
+			break
+		}
+
+		return e.complexity.Cafeteria.Calorie(childComplexity), true
+
+	case "Cafeteria.content":
+		if e.complexity.Cafeteria.Content == nil {
+			break
+		}
+
+		return e.complexity.Cafeteria.Content(childComplexity), true
+
+	case "Cafeteria.date":
+		if e.complexity.Cafeteria.Date == nil {
+			break
+		}
+
+		return e.complexity.Cafeteria.Date(childComplexity), true
+
+	case "Cafeteria.nutrient":
+		if e.complexity.Cafeteria.Nutrient == nil {
+			break
+		}
+
+		return e.complexity.Cafeteria.Nutrient(childComplexity), true
+
+	case "Cafeteria.origin":
+		if e.complexity.Cafeteria.Origin == nil {
+			break
+		}
+
+		return e.complexity.Cafeteria.Origin(childComplexity), true
+
+	case "Cafeteria.type":
+		if e.complexity.Cafeteria.Type == nil {
+			break
+		}
+
+		return e.complexity.Cafeteria.Type(childComplexity), true
 
 	case "Mutation.checkVerifyPhoneCode":
 		if e.complexity.Mutation.CheckVerifyPhoneCode == nil {
@@ -221,6 +275,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Profile.Status(childComplexity), true
+
+	case "Query.cafeteria":
+		if e.complexity.Query.Cafeteria == nil {
+			break
+		}
+
+		args, err := ec.field_Query_cafeteria_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Cafeteria(childComplexity, args["filter"].(*model.CafeteriaFilter)), true
 
 	case "Query.myProfile":
 		if e.complexity.Query.MyProfile == nil {
@@ -376,8 +442,30 @@ input SignUpInput {
   detail: ProfileCode!
 }
 
+enum CafeteriaType {
+  BREAKFAST
+  LUNCH
+  DINNER
+}
+
+type Cafeteria {
+  type: CafeteriaType!
+  calorie: String!
+  content: String!
+  nutrient: String!
+  origin: String!
+  date: Timestamp!
+}
+
+input CafeteriaFilter {
+  dateStart: Timestamp
+  dateEnd: Timestamp
+  type: CafeteriaType
+}
+
 type Query {
   myProfile: Profile
+  cafeteria(filter: CafeteriaFilter): [Cafeteria!]!
 }
 
 type Mutation {
@@ -392,6 +480,7 @@ scalar Phone
 scalar SignUpPhoneCode
 scalar ProfileCode 
 scalar ObjectID
+scalar Timestamp
 `, BuiltIn: false},
 }
 var parsedSchema = gqlparser.MustLoadSchema(sources...)
@@ -526,6 +615,21 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 	return args, nil
 }
 
+func (ec *executionContext) field_Query_cafeteria_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *model.CafeteriaFilter
+	if tmp, ok := rawArgs["filter"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("filter"))
+		arg0, err = ec.unmarshalOCafeteriaFilter2ᚖgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐCafeteriaFilter(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["filter"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field___Type_enumValues_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -563,6 +667,216 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 // endregion ************************** directives.gotpl **************************
 
 // region    **************************** field.gotpl *****************************
+
+func (ec *executionContext) _Cafeteria_type(ctx context.Context, field graphql.CollectedField, obj *model.Cafeteria) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Cafeteria",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Type, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(model.CafeteriaType)
+	fc.Result = res
+	return ec.marshalNCafeteriaType2githubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐCafeteriaType(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Cafeteria_calorie(ctx context.Context, field graphql.CollectedField, obj *model.Cafeteria) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Cafeteria",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Calorie, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Cafeteria_content(ctx context.Context, field graphql.CollectedField, obj *model.Cafeteria) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Cafeteria",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Content, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Cafeteria_nutrient(ctx context.Context, field graphql.CollectedField, obj *model.Cafeteria) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Cafeteria",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Nutrient, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Cafeteria_origin(ctx context.Context, field graphql.CollectedField, obj *model.Cafeteria) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Cafeteria",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Origin, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Cafeteria_date(ctx context.Context, field graphql.CollectedField, obj *model.Cafeteria) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Cafeteria",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Date, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(model.Timestamp)
+	fc.Result = res
+	return ec.marshalNTimestamp2githubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐTimestamp(ctx, field.Selections, res)
+}
 
 func (ec *executionContext) _Mutation_signIn(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
@@ -1081,6 +1395,48 @@ func (ec *executionContext) _Query_myProfile(ctx context.Context, field graphql.
 	res := resTmp.(*model.Profile)
 	fc.Result = res
 	return ec.marshalOProfile2ᚖgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐProfile(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_cafeteria(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_cafeteria_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Cafeteria(rctx, args["filter"].(*model.CafeteriaFilter))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Cafeteria)
+	fc.Result = res
+	return ec.marshalNCafeteria2ᚕᚖgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐCafeteriaᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -2381,6 +2737,42 @@ func (ec *executionContext) ___Type_ofType(ctx context.Context, field graphql.Co
 
 // region    **************************** input.gotpl *****************************
 
+func (ec *executionContext) unmarshalInputCafeteriaFilter(ctx context.Context, obj interface{}) (model.CafeteriaFilter, error) {
+	var it model.CafeteriaFilter
+	var asMap = obj.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "dateStart":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dateStart"))
+			it.DateStart, err = ec.unmarshalOTimestamp2ᚖgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐTimestamp(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "dateEnd":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dateEnd"))
+			it.DateEnd, err = ec.unmarshalOTimestamp2ᚖgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐTimestamp(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "type":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
+			it.Type, err = ec.unmarshalOCafeteriaType2ᚖgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐCafeteriaType(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputOfficalsProfileInput(ctx context.Context, obj interface{}) (model.OfficalsProfileInput, error) {
 	var it model.OfficalsProfileInput
 	var asMap = obj.(map[string]interface{})
@@ -2555,6 +2947,58 @@ func (ec *executionContext) _ProfileDetail(ctx context.Context, sel ast.Selectio
 
 // region    **************************** object.gotpl ****************************
 
+var cafeteriaImplementors = []string{"Cafeteria"}
+
+func (ec *executionContext) _Cafeteria(ctx context.Context, sel ast.SelectionSet, obj *model.Cafeteria) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, cafeteriaImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Cafeteria")
+		case "type":
+			out.Values[i] = ec._Cafeteria_type(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "calorie":
+			out.Values[i] = ec._Cafeteria_calorie(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "content":
+			out.Values[i] = ec._Cafeteria_content(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "nutrient":
+			out.Values[i] = ec._Cafeteria_nutrient(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "origin":
+			out.Values[i] = ec._Cafeteria_origin(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "date":
+			out.Values[i] = ec._Cafeteria_date(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var mutationImplementors = []string{"Mutation"}
 
 func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet) graphql.Marshaler {
@@ -2711,6 +3155,20 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_myProfile(ctx, field)
+				return res
+			})
+		case "cafeteria":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_cafeteria(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
 				return res
 			})
 		case "__type":
@@ -3052,6 +3510,63 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
+func (ec *executionContext) marshalNCafeteria2ᚕᚖgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐCafeteriaᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Cafeteria) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNCafeteria2ᚖgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐCafeteria(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+	return ret
+}
+
+func (ec *executionContext) marshalNCafeteria2ᚖgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐCafeteria(ctx context.Context, sel ast.SelectionSet, v *model.Cafeteria) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._Cafeteria(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNCafeteriaType2githubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐCafeteriaType(ctx context.Context, v interface{}) (model.CafeteriaType, error) {
+	var res model.CafeteriaType
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNCafeteriaType2githubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐCafeteriaType(ctx context.Context, sel ast.SelectionSet, v model.CafeteriaType) graphql.Marshaler {
+	return v
+}
+
 func (ec *executionContext) unmarshalNInt2int(ctx context.Context, v interface{}) (int, error) {
 	res, err := graphql.UnmarshalInt(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -3175,6 +3690,16 @@ func (ec *executionContext) marshalNString2ᚕstringᚄ(ctx context.Context, sel
 	}
 
 	return ret
+}
+
+func (ec *executionContext) unmarshalNTimestamp2githubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐTimestamp(ctx context.Context, v interface{}) (model.Timestamp, error) {
+	var res model.Timestamp
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNTimestamp2githubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐTimestamp(ctx context.Context, sel ast.SelectionSet, v model.Timestamp) graphql.Marshaler {
+	return v
 }
 
 func (ec *executionContext) unmarshalNUserStatus2githubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐUserStatus(ctx context.Context, v interface{}) (model.UserStatus, error) {
@@ -3440,6 +3965,30 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	return graphql.MarshalBoolean(*v)
 }
 
+func (ec *executionContext) unmarshalOCafeteriaFilter2ᚖgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐCafeteriaFilter(ctx context.Context, v interface{}) (*model.CafeteriaFilter, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputCafeteriaFilter(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalOCafeteriaType2ᚖgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐCafeteriaType(ctx context.Context, v interface{}) (*model.CafeteriaType, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var res = new(model.CafeteriaType)
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOCafeteriaType2ᚖgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐCafeteriaType(ctx context.Context, sel ast.SelectionSet, v *model.CafeteriaType) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return v
+}
+
 func (ec *executionContext) unmarshalOOfficalsProfileInput2ᚖgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐOfficalsProfileInput(ctx context.Context, v interface{}) (*model.OfficalsProfileInput, error) {
 	if v == nil {
 		return nil, nil
@@ -3493,6 +4042,22 @@ func (ec *executionContext) unmarshalOTeacherProfileInput2ᚖgithubᚗcomᚋosan
 	}
 	res, err := ec.unmarshalInputTeacherProfileInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalOTimestamp2ᚖgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐTimestamp(ctx context.Context, v interface{}) (*model.Timestamp, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var res = new(model.Timestamp)
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOTimestamp2ᚖgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐTimestamp(ctx context.Context, sel ast.SelectionSet, v *model.Timestamp) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return v
 }
 
 func (ec *executionContext) marshalO__EnumValue2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐEnumValueᚄ(ctx context.Context, sel ast.SelectionSet, v []introspection.EnumValue) graphql.Marshaler {

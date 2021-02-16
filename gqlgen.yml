@@ -49,6 +49,9 @@ models:
   ObjectID:
     model:
       - model.ObjectID
+  Timestamp:
+    model:
+      - model.Timestamp
   ID:
     model:
       - github.com/99designs/gqlgen/graphql.ID

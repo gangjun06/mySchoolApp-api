@@ -19,6 +19,7 @@ type Config struct {
 		Secret string
 		From   string
 	}
+	NeisAPIKey string
 }
 
 var conf *Config
@@ -35,6 +36,8 @@ func Init() {
 	flag.StringVar(&conf.CoolSMS.ApiKey, "coolsms_apikey", os.Getenv("COOLSMS_APIKEY"), "coolsms api key")
 	flag.StringVar(&conf.CoolSMS.Secret, "coolsms_secret", os.Getenv("COOLSMS_SECRET"), "coolsms secret")
 	flag.StringVar(&conf.CoolSMS.From, "coolsms_from", os.Getenv("COOLSMS_FROM"), "coolsms from")
+
+	flag.StringVar(&conf.NeisAPIKey, "neis_apikey", os.Getenv("NEIS_APIKEY"), "https://open.neis.go.kr api key")
 
 	flag.Parse()
 }

@@ -12,6 +12,21 @@ type ProfileDetail interface {
 	IsProfileDetail()
 }
 
+type Cafeteria struct {
+	Type     CafeteriaType `json:"type"`
+	Calorie  string        `json:"calorie"`
+	Content  string        `json:"content"`
+	Nutrient string        `json:"nutrient"`
+	Origin   string        `json:"origin"`
+	Date     Timestamp     `json:"date"`
+}
+
+type CafeteriaFilter struct {
+	DateStart *Timestamp     `json:"dateStart"`
+	DateEnd   *Timestamp     `json:"dateEnd"`
+	Type      *CafeteriaType `json:"type"`
+}
+
 type OfficalsProfile struct {
 	Role        string `json:"role"`
 	Description string `json:"description"`
@@ -63,6 +78,49 @@ func (TeacherProfile) IsProfileDetail() {}
 
 type TeacherProfileInput struct {
 	Subject []string `json:"subject"`
+}
+
+type CafeteriaType string
+
+const (
+	CafeteriaTypeBreakfast CafeteriaType = "BREAKFAST"
+	CafeteriaTypeLunch     CafeteriaType = "LUNCH"
+	CafeteriaTypeDinner    CafeteriaType = "DINNER"
+)
+
+var AllCafeteriaType = []CafeteriaType{
+	CafeteriaTypeBreakfast,
+	CafeteriaTypeLunch,
+	CafeteriaTypeDinner,
+}
+
+func (e CafeteriaType) IsValid() bool {
+	switch e {
+	case CafeteriaTypeBreakfast, CafeteriaTypeLunch, CafeteriaTypeDinner:
+		return true
+	}
+	return false
+}
+
+func (e CafeteriaType) String() string {
+	return string(e)
+}
+
+func (e *CafeteriaType) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = CafeteriaType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid CafeteriaType", str)
+	}
+	return nil
+}
+
+func (e CafeteriaType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 type UserStatus string

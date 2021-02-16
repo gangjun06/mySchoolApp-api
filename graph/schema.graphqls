@@ -53,8 +53,30 @@ input SignUpInput {
   detail: ProfileCode!
 }
 
+enum CafeteriaType {
+  BREAKFAST
+  LUNCH
+  DINNER
+}
+
+type Cafeteria {
+  type: CafeteriaType!
+  calorie: String!
+  content: String!
+  nutrient: String!
+  origin: String!
+  date: Timestamp!
+}
+
+input CafeteriaFilter {
+  dateStart: Timestamp
+  dateEnd: Timestamp
+  type: CafeteriaType
+}
+
 type Query {
   myProfile: Profile
+  cafeteria(filter: CafeteriaFilter): [Cafeteria!]!
 }
 
 type Mutation {
@@ -69,3 +91,4 @@ scalar Phone
 scalar SignUpPhoneCode
 scalar ProfileCode 
 scalar ObjectID
+scalar Timestamp

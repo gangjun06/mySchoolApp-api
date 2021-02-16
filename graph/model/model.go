@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -67,6 +68,26 @@ func (o *ObjectID) UnmarshalGQL(v interface{}) error {
 			return ErrNotCorrectInput
 		}
 		*o = ObjectID(result)
+		return nil
+	default:
+		return ErrNotCorrectInput
+	}
+}
+
+type Timestamp time.Time
+
+func (t Timestamp) MarshalGQL(w io.Writer) {
+	io.WriteString(w, strconv.Quote(time.Time(t).Format(time.RFC3339)))
+}
+
+func (o *Timestamp) UnmarshalGQL(v interface{}) error {
+	switch v := v.(type) {
+	case string:
+		time, err := time.Parse(time.RFC3339, v)
+		if err != nil {
+			return ErrNotCorrectInput
+		}
+		*o = Timestamp(time)
 		return nil
 	default:
 		return ErrNotCorrectInput
