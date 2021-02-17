@@ -1,3 +1,5 @@
+directive @auth(getInfo: Boolean, reqPermission: [Permission!]) on FIELD_DEFINITION
+
 union ProfileDetail = StudentProfile | TeacherProfile | OfficalsProfile
 
 enum UserStatus {
@@ -20,7 +22,6 @@ type StudentProfile {
   class: Int!
   number: Int!
 }
-
 input StudentProfileInput {
   grade: Int!
   class: Int!
@@ -74,17 +75,23 @@ input CafeteriaFilter {
   type: CafeteriaType
 }
 
+type ProfileWithToken {
+  profile: Profile!
+  token: JWT!
+}
+
 type Query {
-  myProfile: Profile
+  myProfile: Profile @auth(getInfo: true)
   cafeteria(filter: CafeteriaFilter): [Cafeteria!]!
 }
 
 type Mutation {
-  signIn(phone: String!, password: String!): String!
+  signIn(phone: Phone!, password: String!): ProfileWithToken!
+  signOut: Nothing!
   verifyPhone(number: Phone!): String!
   checkVerifyPhoneCode(number: Phone!, code: String!): SignUpPhoneCode!
   setProfile(student:StudentProfileInput, teacher:TeacherProfileInput, officals:OfficalsProfileInput): ProfileCode!
-  signUp(input: SignUpInput!): Profile
+  signUp(input: SignUpInput!): ProfileWithToken
 }
 
 scalar Phone
@@ -92,3 +99,6 @@ scalar SignUpPhoneCode
 scalar ProfileCode 
 scalar ObjectID
 scalar Timestamp
+scalar JWT
+scalar Nothing
+scalar Permission

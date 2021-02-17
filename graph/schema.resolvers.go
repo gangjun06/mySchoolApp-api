@@ -9,15 +9,31 @@ import (
 	"time"
 
 	"github.com/muesli/cache2go"
-	"github.com/osang-school/backend/graph/errors"
 	"github.com/osang-school/backend/graph/generated"
 	"github.com/osang-school/backend/graph/model"
+	"github.com/osang-school/backend/graph/myerr"
 	"github.com/osang-school/backend/internal/neis"
+	"github.com/osang-school/backend/internal/session"
 	"github.com/osang-school/backend/internal/user"
 	"github.com/osang-school/backend/internal/utils"
 )
 
-func (r *mutationResolver) SignIn(ctx context.Context, phone string, password string) (string, error) {
+func (r *mutationResolver) SignIn(ctx context.Context, phone model.Phone, password string) (*model.ProfileWithToken, error) {
+	userData, err := user.GetUserByPhone(phone)
+	if err != nil {
+		return nil, err
+	}
+	token, err := session.CreateToken(userData.ID, &userData.Permissions)
+	if err != nil {
+		return nil, err
+	}
+	return &model.ProfileWithToken{
+		Profile: user.UserToGqlType(userData),
+		Token:   token,
+	}, nil
+}
+
+func (r *mutationResolver) SignOut(ctx context.Context) (string, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
@@ -26,9 +42,9 @@ func (r *mutationResolver) VerifyPhone(ctx context.Context, number model.Phone) 
 	if err != nil {
 		return "", err
 	} else if exits {
-		return "", errors.New(errors.ErrDuplicate, "")
+		return "", myerr.New(myerr.ErrDuplicate, "")
 	}
-	return "", user.PhoneVerifyCode("ip", string(number))
+	return "", user.PhoneVerifyCode(ctx.Value("ip").(string), string(number))
 }
 
 func (r *mutationResolver) CheckVerifyPhoneCode(ctx context.Context, number model.Phone, code string) (string, error) {
@@ -43,7 +59,7 @@ func (r *mutationResolver) SetProfile(ctx context.Context, student *model.Studen
 		if err != nil {
 			return "", err
 		} else if exits {
-			return "", errors.New(errors.ErrDuplicate, "")
+			return "", myerr.New(myerr.ErrDuplicate, "")
 		}
 		cache.Add(randomStr, time.Minute*1, student)
 	} else if teacher != nil {
@@ -51,12 +67,12 @@ func (r *mutationResolver) SetProfile(ctx context.Context, student *model.Studen
 	} else if officals != nil {
 		cache.Add(randomStr, time.Minute*1, officals)
 	} else {
-		return "", errors.New(errors.ErrBadRequest, "")
+		return "", myerr.New(myerr.ErrBadRequest, "")
 	}
 	return randomStr, nil
 }
 
-func (r *mutationResolver) SignUp(ctx context.Context, input model.SignUpInput) (*model.Profile, error) {
+func (r *mutationResolver) SignUp(ctx context.Context, input model.SignUpInput) (*model.ProfileWithToken, error) {
 	phone, err := user.PhoneSignUpCheck(input.Phone)
 	if err != nil {
 		return nil, err
@@ -64,7 +80,7 @@ func (r *mutationResolver) SignUp(ctx context.Context, input model.SignUpInput) 
 	cache := cache2go.Cache("profile")
 	res, err := cache.Value(input.Detail)
 	if err != nil {
-		return nil, errors.New(errors.ErrBadRequest, "")
+		return nil, myerr.New(myerr.ErrBadRequest, "")
 	}
 	detailData := res.Data()
 
@@ -117,17 +133,24 @@ func (r *mutationResolver) SignUp(ctx context.Context, input model.SignUpInput) 
 		Status:   user.StatusToEnum(user.StatusWait),
 		Detail:   user.DetailToUnion(resultDetail),
 	}
-	return profile, nil
+
+	result := &model.ProfileWithToken{
+		Profile: profile,
+		Token:   "",
+	}
+	return result, nil
 }
 
 func (r *queryResolver) MyProfile(ctx context.Context) (*model.Profile, error) {
-	panic(fmt.Errorf("not implemented"))
+	userData := ctx.Value("user").(*user.User)
+	return user.UserToGqlType(userData), nil
 }
 
 func (r *queryResolver) Cafeteria(ctx context.Context, filter *model.CafeteriaFilter) ([]*model.Cafeteria, error) {
 	if filter == nil {
 		filter = &model.CafeteriaFilter{}
 	}
+
 	return neis.GetCafeteria(filter)
 }
 

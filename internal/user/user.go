@@ -4,8 +4,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/osang-school/backend/graph/errors"
 	"github.com/osang-school/backend/graph/model"
+	"github.com/osang-school/backend/graph/myerr"
 	"github.com/osang-school/backend/internal/db/mongodb"
 	"github.com/osang-school/backend/internal/db/redis"
 	"github.com/osang-school/backend/internal/send"
@@ -19,16 +19,17 @@ type (
 	Role   uint8
 	Status uint8
 	User   struct {
-		ID       primitive.ObjectID `bson:"_id,omitempty"`
-		Status   Status             `bson:"status,omitempty"`
-		Name     string             `bson:"name,omitempty"`
-		Phone    string             `bson:"phone,omitempty"`
-		Password string             `bson:"password,omitempty"`
-		Nickname string             `bson:"nickname,omitempty"`
-		Role     Role               `bson:"role,omitempty"`
-		Student  *Student           `bson:"student,omitempty"`
-		Teacher  *Teacher           `bson:"teacher,omitempty"`
-		Officals *Officals          `bson:"officals,omitempty"`
+		ID          primitive.ObjectID `bson:"_id,omitempty"`
+		Permissions []string           `bson:"permissions,omitempty"`
+		Status      Status             `bson:"status,omitempty"`
+		Name        string             `bson:"name,omitempty"`
+		Phone       string             `bson:"phone,omitempty"`
+		Password    string             `bson:"password,omitempty"`
+		Nickname    string             `bson:"nickname,omitempty"`
+		Role        Role               `bson:"role,omitempty"`
+		Student     *Student           `bson:"student,omitempty"`
+		Teacher     *Teacher           `bson:"teacher,omitempty"`
+		Officals    *Officals          `bson:"officals,omitempty"`
 	}
 	Student struct {
 		Grade  int `bson:"grade,omitempty"`
@@ -65,7 +66,7 @@ func PhoneVerifyCode(ip, phone string) error {
 	if res, err := redis.C.Get("phone_verify:cnt:" + ip).Result(); err == nil {
 		cnt, _ = strconv.Atoi(res)
 		if cnt >= SendMax {
-			return errors.New(errors.ErrTooManyReq, "request for verify beyond the limit")
+			return myerr.New(myerr.ErrTooManyReq, "request for verify beyond the limit")
 		}
 	}
 
@@ -88,12 +89,12 @@ func PhoneVerifyCheck(phone, code string) (string, error) {
 	str, err := redis.C.Get("phone_verify:code:" + phone).Result()
 	if err != nil {
 		if redis.IsNil(err) {
-			return "", errors.New(errors.ErrBadRequest, "not valid code")
+			return "", myerr.New(myerr.ErrBadRequest, "not valid code")
 		}
 		return "", err
 	}
 	if str != code {
-		return "", errors.New(errors.ErrBadRequest, "not valid code")
+		return "", myerr.New(myerr.ErrBadRequest, "not valid code")
 	}
 
 	signupCode := utils.CreateRandomString(6)
@@ -106,9 +107,9 @@ func PhoneSignUpCheck(code string) (string, error) {
 	phone, err := redis.C.Get("phone_verify:signup:" + code).Result()
 	if err != nil {
 		if redis.IsNil(err) {
-			return "", errors.New(errors.ErrBadRequest, "not valid code")
+			return "", myerr.New(myerr.ErrBadRequest, "not valid code")
 		}
-		return "", errors.New(errors.ErrServer, err.Error())
+		return "", myerr.New(myerr.ErrServer, err.Error())
 	}
 	return phone, nil
 }
@@ -150,14 +151,27 @@ func SignUp(user *User) (primitive.ObjectID, error) {
 }
 
 // GetUserByPhone
-func GetuserByPhone(phone model.Phone) (*User, error) {
+func GetUserByPhone(phone model.Phone) (*User, error) {
 	filter := bson.M{"phone": phone}
 	var result User
 	if err := mongodb.User.FindOne(nil, filter).Decode(&result); err != nil {
 		if err == mongo.ErrNoDocuments {
-			return nil, errors.New(errors.ErrNotFound, "user not found")
+			return nil, myerr.New(myerr.ErrNotFound, "user not found")
 		}
-		return nil, errors.New(errors.ErrServer, err.Error())
+		return nil, myerr.New(myerr.ErrServer, err.Error())
+	}
+	return &result, nil
+}
+
+// GetUserByID
+func GetUserByID(id primitive.ObjectID) (*User, error) {
+	filter := bson.M{"_id": id}
+	var result User
+	if err := mongodb.User.FindOne(nil, filter).Decode(&result); err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, myerr.New(myerr.ErrNotFound, "user not found")
+		}
+		return nil, myerr.New(myerr.ErrServer, err.Error())
 	}
 	return &result, nil
 }
@@ -193,4 +207,23 @@ func StatusToEnum(s Status) model.UserStatus {
 	default:
 		return model.UserStatusBan
 	}
+}
+
+func UserToGqlType(u *User) *model.Profile {
+	profile := &model.Profile{
+		ID:       model.ObjectID(u.ID),
+		Name:     u.Name,
+		Nickname: u.Nickname,
+		Phone:    model.Phone(u.Phone),
+		Status:   StatusToEnum(u.Status),
+	}
+	switch u.Role {
+	case RoleStudent:
+		profile.Detail = model.StudentProfile{
+			Grade:  u.Student.Grade,
+			Class:  u.Student.Class,
+			Number: u.Student.Number,
+		}
+	}
+	return profile
 }

@@ -48,6 +48,11 @@ type Profile struct {
 	Status   UserStatus    `json:"status"`
 }
 
+type ProfileWithToken struct {
+	Profile *Profile `json:"profile"`
+	Token   string   `json:"token"`
+}
+
 type SignUpInput struct {
 	Name     string  `json:"name"`
 	Nickname *string `json:"nickname"`

@@ -1,4 +1,4 @@
-package errors
+package myerr
 
 import (
 	"strings"
@@ -18,6 +18,7 @@ const (
 	ErrDuplicate     ErrorCode = "DUPLICATE"
 	ErrPasswordWrong ErrorCode = "PASSWORD_WRONG"
 	ErrAuth          ErrorCode = "AUTH"
+	ErrPermission    ErrorCode = "ERR_PERMISSION"
 	ErrTooManyReq    ErrorCode = "TOO_MANY_REQ"
 	ErrServer        ErrorCode = "ERR_SERVER"
 )
@@ -29,6 +30,7 @@ var (
 		ErrPasswordWrong: "password is incorrect",
 		ErrAuth:          "error while auth",
 		ErrTooManyReq:    "server get too many requests. try again later",
+		ErrPermission:    "you don't have permission",
 		ErrServer:        "error server",
 		ErrDuplicate:     "item is already exits",
 	}

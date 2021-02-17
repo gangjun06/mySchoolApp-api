@@ -41,6 +41,7 @@ type ResolverRoot interface {
 }
 
 type DirectiveRoot struct {
+	Auth func(ctx context.Context, obj interface{}, next graphql.Resolver, getInfo *bool, reqPermission []string) (res interface{}, err error)
 }
 
 type ComplexityRoot struct {
@@ -56,7 +57,8 @@ type ComplexityRoot struct {
 	Mutation struct {
 		CheckVerifyPhoneCode func(childComplexity int, number model.Phone, code string) int
 		SetProfile           func(childComplexity int, student *model.StudentProfileInput, teacher *model.TeacherProfileInput, officals *model.OfficalsProfileInput) int
-		SignIn               func(childComplexity int, phone string, password string) int
+		SignIn               func(childComplexity int, phone model.Phone, password string) int
+		SignOut              func(childComplexity int) int
 		SignUp               func(childComplexity int, input model.SignUpInput) int
 		VerifyPhone          func(childComplexity int, number model.Phone) int
 	}
@@ -73,6 +75,11 @@ type ComplexityRoot struct {
 		Nickname func(childComplexity int) int
 		Phone    func(childComplexity int) int
 		Status   func(childComplexity int) int
+	}
+
+	ProfileWithToken struct {
+		Profile func(childComplexity int) int
+		Token   func(childComplexity int) int
 	}
 
 	Query struct {
@@ -92,11 +99,12 @@ type ComplexityRoot struct {
 }
 
 type MutationResolver interface {
-	SignIn(ctx context.Context, phone string, password string) (string, error)
+	SignIn(ctx context.Context, phone model.Phone, password string) (*model.ProfileWithToken, error)
+	SignOut(ctx context.Context) (string, error)
 	VerifyPhone(ctx context.Context, number model.Phone) (string, error)
 	CheckVerifyPhoneCode(ctx context.Context, number model.Phone, code string) (string, error)
 	SetProfile(ctx context.Context, student *model.StudentProfileInput, teacher *model.TeacherProfileInput, officals *model.OfficalsProfileInput) (string, error)
-	SignUp(ctx context.Context, input model.SignUpInput) (*model.Profile, error)
+	SignUp(ctx context.Context, input model.SignUpInput) (*model.ProfileWithToken, error)
 }
 type QueryResolver interface {
 	MyProfile(ctx context.Context) (*model.Profile, error)
@@ -194,7 +202,14 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.SignIn(childComplexity, args["phone"].(string), args["password"].(string)), true
+		return e.complexity.Mutation.SignIn(childComplexity, args["phone"].(model.Phone), args["password"].(string)), true
+
+	case "Mutation.signOut":
+		if e.complexity.Mutation.SignOut == nil {
+			break
+		}
+
+		return e.complexity.Mutation.SignOut(childComplexity), true
 
 	case "Mutation.signUp":
 		if e.complexity.Mutation.SignUp == nil {
@@ -275,6 +290,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Profile.Status(childComplexity), true
+
+	case "ProfileWithToken.profile":
+		if e.complexity.ProfileWithToken.Profile == nil {
+			break
+		}
+
+		return e.complexity.ProfileWithToken.Profile(childComplexity), true
+
+	case "ProfileWithToken.token":
+		if e.complexity.ProfileWithToken.Token == nil {
+			break
+		}
+
+		return e.complexity.ProfileWithToken.Token(childComplexity), true
 
 	case "Query.cafeteria":
 		if e.complexity.Query.Cafeteria == nil {
@@ -387,7 +416,9 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 }
 
 var sources = []*ast.Source{
-	{Name: "graph/schema.graphqls", Input: `union ProfileDetail = StudentProfile | TeacherProfile | OfficalsProfile
+	{Name: "graph/schema.graphqls", Input: `directive @auth(getInfo: Boolean, reqPermission: [Permission!]) on FIELD_DEFINITION
+
+union ProfileDetail = StudentProfile | TeacherProfile | OfficalsProfile
 
 enum UserStatus {
   WAIT
@@ -409,7 +440,6 @@ type StudentProfile {
   class: Int!
   number: Int!
 }
-
 input StudentProfileInput {
   grade: Int!
   class: Int!
@@ -463,17 +493,23 @@ input CafeteriaFilter {
   type: CafeteriaType
 }
 
+type ProfileWithToken {
+  profile: Profile!
+  token: JWT!
+}
+
 type Query {
-  myProfile: Profile
+  myProfile: Profile @auth(getInfo: true)
   cafeteria(filter: CafeteriaFilter): [Cafeteria!]!
 }
 
 type Mutation {
-  signIn(phone: String!, password: String!): String!
+  signIn(phone: Phone!, password: String!): ProfileWithToken!
+  signOut: Nothing!
   verifyPhone(number: Phone!): String!
   checkVerifyPhoneCode(number: Phone!, code: String!): SignUpPhoneCode!
   setProfile(student:StudentProfileInput, teacher:TeacherProfileInput, officals:OfficalsProfileInput): ProfileCode!
-  signUp(input: SignUpInput!): Profile
+  signUp(input: SignUpInput!): ProfileWithToken
 }
 
 scalar Phone
@@ -481,6 +517,9 @@ scalar SignUpPhoneCode
 scalar ProfileCode 
 scalar ObjectID
 scalar Timestamp
+scalar JWT
+scalar Nothing
+scalar Permission
 `, BuiltIn: false},
 }
 var parsedSchema = gqlparser.MustLoadSchema(sources...)
@@ -488,6 +527,30 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 // endregion ************************** generated!.gotpl **************************
 
 // region    ***************************** args.gotpl *****************************
+
+func (ec *executionContext) dir_auth_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *bool
+	if tmp, ok := rawArgs["getInfo"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("getInfo"))
+		arg0, err = ec.unmarshalOBoolean2ᚖbool(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["getInfo"] = arg0
+	var arg1 []string
+	if tmp, ok := rawArgs["reqPermission"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("reqPermission"))
+		arg1, err = ec.unmarshalOPermission2ᚕstringᚄ(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["reqPermission"] = arg1
+	return args, nil
+}
 
 func (ec *executionContext) field_Mutation_checkVerifyPhoneCode_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
@@ -549,10 +612,10 @@ func (ec *executionContext) field_Mutation_setProfile_args(ctx context.Context, 
 func (ec *executionContext) field_Mutation_signIn_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
+	var arg0 model.Phone
 	if tmp, ok := rawArgs["phone"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("phone"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		arg0, err = ec.unmarshalNPhone2githubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐPhone(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -903,7 +966,42 @@ func (ec *executionContext) _Mutation_signIn(ctx context.Context, field graphql.
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().SignIn(rctx, args["phone"].(string), args["password"].(string))
+		return ec.resolvers.Mutation().SignIn(rctx, args["phone"].(model.Phone), args["password"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.ProfileWithToken)
+	fc.Result = res
+	return ec.marshalNProfileWithToken2ᚖgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐProfileWithToken(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_signOut(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().SignOut(rctx)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -917,7 +1015,7 @@ func (ec *executionContext) _Mutation_signIn(ctx context.Context, field graphql.
 	}
 	res := resTmp.(string)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNNothing2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_verifyPhone(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -1080,9 +1178,9 @@ func (ec *executionContext) _Mutation_signUp(ctx context.Context, field graphql.
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.Profile)
+	res := resTmp.(*model.ProfileWithToken)
 	fc.Result = res
-	return ec.marshalOProfile2ᚖgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐProfile(ctx, field.Selections, res)
+	return ec.marshalOProfileWithToken2ᚖgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐProfileWithToken(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _OfficalsProfile_role(ctx context.Context, field graphql.CollectedField, obj *model.OfficalsProfile) (ret graphql.Marshaler) {
@@ -1365,6 +1463,76 @@ func (ec *executionContext) _Profile_status(ctx context.Context, field graphql.C
 	return ec.marshalNUserStatus2githubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐUserStatus(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _ProfileWithToken_profile(ctx context.Context, field graphql.CollectedField, obj *model.ProfileWithToken) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "ProfileWithToken",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Profile, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Profile)
+	fc.Result = res
+	return ec.marshalNProfile2ᚖgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐProfile(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _ProfileWithToken_token(ctx context.Context, field graphql.CollectedField, obj *model.ProfileWithToken) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "ProfileWithToken",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Token, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNJWT2string(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Query_myProfile(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -1382,8 +1550,32 @@ func (ec *executionContext) _Query_myProfile(ctx context.Context, field graphql.
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().MyProfile(rctx)
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Query().MyProfile(rctx)
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			getInfo, err := ec.unmarshalOBoolean2ᚖbool(ctx, true)
+			if err != nil {
+				return nil, err
+			}
+			if ec.directives.Auth == nil {
+				return nil, errors.New("directive auth is not implemented")
+			}
+			return ec.directives.Auth(ctx, nil, directive0, getInfo, nil)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*model.Profile); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/osang-school/backend/graph/model.Profile`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3019,6 +3211,11 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "signOut":
+			out.Values[i] = ec._Mutation_signOut(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "verifyPhone":
 			out.Values[i] = ec._Mutation_verifyPhone(ctx, field)
 			if out.Values[i] == graphql.Null {
@@ -3117,6 +3314,38 @@ func (ec *executionContext) _Profile(ctx context.Context, sel ast.SelectionSet, 
 			}
 		case "status":
 			out.Values[i] = ec._Profile_status(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var profileWithTokenImplementors = []string{"ProfileWithToken"}
+
+func (ec *executionContext) _ProfileWithToken(ctx context.Context, sel ast.SelectionSet, obj *model.ProfileWithToken) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, profileWithTokenImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ProfileWithToken")
+		case "profile":
+			out.Values[i] = ec._ProfileWithToken_profile(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "token":
+			out.Values[i] = ec._ProfileWithToken_token(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -3582,6 +3811,36 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 	return res
 }
 
+func (ec *executionContext) unmarshalNJWT2string(ctx context.Context, v interface{}) (string, error) {
+	res, err := graphql.UnmarshalString(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNJWT2string(ctx context.Context, sel ast.SelectionSet, v string) graphql.Marshaler {
+	res := graphql.MarshalString(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNNothing2string(ctx context.Context, v interface{}) (string, error) {
+	res, err := graphql.UnmarshalString(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNNothing2string(ctx context.Context, sel ast.SelectionSet, v string) graphql.Marshaler {
+	res := graphql.MarshalString(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+	}
+	return res
+}
+
 func (ec *executionContext) unmarshalNObjectID2githubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐObjectID(ctx context.Context, v interface{}) (model.ObjectID, error) {
 	var res model.ObjectID
 	err := res.UnmarshalGQL(v)
@@ -3592,6 +3851,21 @@ func (ec *executionContext) marshalNObjectID2githubᚗcomᚋosangᚑschoolᚋbac
 	return v
 }
 
+func (ec *executionContext) unmarshalNPermission2string(ctx context.Context, v interface{}) (string, error) {
+	res, err := graphql.UnmarshalString(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNPermission2string(ctx context.Context, sel ast.SelectionSet, v string) graphql.Marshaler {
+	res := graphql.MarshalString(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+	}
+	return res
+}
+
 func (ec *executionContext) unmarshalNPhone2githubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐPhone(ctx context.Context, v interface{}) (model.Phone, error) {
 	var res model.Phone
 	err := res.UnmarshalGQL(v)
@@ -3600,6 +3874,16 @@ func (ec *executionContext) unmarshalNPhone2githubᚗcomᚋosangᚑschoolᚋback
 
 func (ec *executionContext) marshalNPhone2githubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐPhone(ctx context.Context, sel ast.SelectionSet, v model.Phone) graphql.Marshaler {
 	return v
+}
+
+func (ec *executionContext) marshalNProfile2ᚖgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐProfile(ctx context.Context, sel ast.SelectionSet, v *model.Profile) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._Profile(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNProfileCode2string(ctx context.Context, v interface{}) (string, error) {
@@ -3625,6 +3909,20 @@ func (ec *executionContext) marshalNProfileDetail2githubᚗcomᚋosangᚑschool�
 		return graphql.Null
 	}
 	return ec._ProfileDetail(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNProfileWithToken2githubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐProfileWithToken(ctx context.Context, sel ast.SelectionSet, v model.ProfileWithToken) graphql.Marshaler {
+	return ec._ProfileWithToken(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNProfileWithToken2ᚖgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐProfileWithToken(ctx context.Context, sel ast.SelectionSet, v *model.ProfileWithToken) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._ProfileWithToken(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNSignUpInput2githubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐSignUpInput(ctx context.Context, v interface{}) (model.SignUpInput, error) {
@@ -3997,11 +4295,54 @@ func (ec *executionContext) unmarshalOOfficalsProfileInput2ᚖgithubᚗcomᚋosa
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) unmarshalOPermission2ᚕstringᚄ(ctx context.Context, v interface{}) ([]string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var vSlice []interface{}
+	if v != nil {
+		if tmp1, ok := v.([]interface{}); ok {
+			vSlice = tmp1
+		} else {
+			vSlice = []interface{}{v}
+		}
+	}
+	var err error
+	res := make([]string, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNPermission2string(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalOPermission2ᚕstringᚄ(ctx context.Context, sel ast.SelectionSet, v []string) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	for i := range v {
+		ret[i] = ec.marshalNPermission2string(ctx, sel, v[i])
+	}
+
+	return ret
+}
+
 func (ec *executionContext) marshalOProfile2ᚖgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐProfile(ctx context.Context, sel ast.SelectionSet, v *model.Profile) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Profile(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOProfileWithToken2ᚖgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐProfileWithToken(ctx context.Context, sel ast.SelectionSet, v *model.ProfileWithToken) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._ProfileWithToken(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOString2string(ctx context.Context, v interface{}) (string, error) {

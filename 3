@@ -20,7 +20,6 @@ import (
 	"github.com/osang-school/backend/internal/db/mongodb"
 	"github.com/osang-school/backend/internal/db/redis"
 	"github.com/osang-school/backend/internal/session"
-	"github.com/osang-school/backend/internal/user"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 )
 
@@ -50,16 +49,8 @@ func main() {
 
 		for _, v := range reqPermission {
 			if ok := hasItem(data.Permission, v); !ok {
-				return nil, myerr.New(myerr.ErrPermission, "")
-			}
-		}
-
-		if getInfo != nil && *getInfo {
-			user, err := user.GetUserByID(data.ID)
-			if err != nil {
 				return nil, err
 			}
-			ctx = context.WithValue(ctx, "user", user)
 		}
 
 		return next(ctx)
