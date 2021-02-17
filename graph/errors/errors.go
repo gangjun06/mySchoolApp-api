@@ -15,6 +15,7 @@ type (
 const (
 	ErrBadRequest    ErrorCode = "BAD_REQUEST"
 	ErrNotFound      ErrorCode = "NOT_FOUND"
+	ErrDuplicate     ErrorCode = "DUPLICATE"
 	ErrPasswordWrong ErrorCode = "PASSWORD_WRONG"
 	ErrAuth          ErrorCode = "AUTH"
 	ErrTooManyReq    ErrorCode = "TOO_MANY_REQ"
@@ -29,6 +30,7 @@ var (
 		ErrAuth:          "error while auth",
 		ErrTooManyReq:    "server get too many requests. try again later",
 		ErrServer:        "error server",
+		ErrDuplicate:     "item is already exits",
 	}
 )
 
@@ -37,15 +39,19 @@ func New(code ErrorCode, message string) error {
 }
 
 func Parse(err error) (error, bool) {
-	spl := strings.Split(err.Error(), ": ")
-	if len(spl) != 2 || ErrorCodeDescription[ErrorCode(spl[0])] == "" {
+	spl := strings.Split(err.Error(), "CustomErr/")
+	if len(spl) != 2 {
 		return nil, false
 	}
-	return New(ErrorCode(spl[0]), spl[1]), true
+	spl2 := strings.Split(spl[1], ": ")
+	if len(spl2) < 2 || ErrorCodeDescription[ErrorCode(spl2[0])] == "" {
+		return nil, false
+	}
+	return New(ErrorCode(spl2[0]), strings.Join(spl2[1:], "")), true
 }
 
 func (e *Error) Error() string {
-	return string(e.Code) + ": " + e.Message
+	return "CustomErr/" + string(e.Code) + ": " + e.Message
 }
 
 func (e *Error) Description() string {

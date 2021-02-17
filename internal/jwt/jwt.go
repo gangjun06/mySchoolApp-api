@@ -17,6 +17,7 @@ type (
 
 	Data struct {
 		ID         primitive.ObjectID
+		SessionID  string
 		Permission *[]string
 	}
 )

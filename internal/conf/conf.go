@@ -20,6 +20,10 @@ type Config struct {
 		From   string
 	}
 	NeisAPIKey string
+	Redis      struct {
+		Addr string
+		Pass string
+	}
 }
 
 var conf *Config
@@ -38,6 +42,9 @@ func Init() {
 	flag.StringVar(&conf.CoolSMS.From, "coolsms_from", os.Getenv("COOLSMS_FROM"), "coolsms from")
 
 	flag.StringVar(&conf.NeisAPIKey, "neis_apikey", os.Getenv("NEIS_APIKEY"), "https://open.neis.go.kr api key")
+
+	flag.StringVar(&conf.Redis.Addr, "redis_addr", os.Getenv("REDIS_ADDR"), "address of redis")
+	flag.StringVar(&conf.Redis.Pass, "redis_pass", os.Getenv("REDIS_PASS"), "password of redis")
 
 	flag.Parse()
 }

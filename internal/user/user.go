@@ -1,13 +1,13 @@
 package user
 
 import (
-	"fmt"
+	"strconv"
 	"time"
 
-	"github.com/muesli/cache2go"
 	"github.com/osang-school/backend/graph/errors"
 	"github.com/osang-school/backend/graph/model"
 	"github.com/osang-school/backend/internal/db/mongodb"
+	"github.com/osang-school/backend/internal/db/redis"
 	"github.com/osang-school/backend/internal/send"
 	"github.com/osang-school/backend/internal/utils"
 	"go.mongodb.org/mongo-driver/bson"
@@ -61,50 +61,56 @@ const SendMax = 5
 
 // PhoneVerifyCode generate and send phone verify code
 func PhoneVerifyCode(ip, phone string) error {
-	cache := cache2go.Cache("phoneVerify")
 	cnt := 0
-	if res, err := cache.Value("cnt:" + ip); err == nil {
-		cnt = res.Data().(int)
+	if res, err := redis.C.Get("phone_verify:cnt:" + ip).Result(); err == nil {
+		cnt, _ = strconv.Atoi(res)
 		if cnt >= SendMax {
 			return errors.New(errors.ErrTooManyReq, "request for verify beyond the limit")
 		}
 	}
 
 	code := utils.CreateRandomNum(6)
-	cache.Add(phone, time.Minute*5, code)
+	redis.C.Set("phone_verify:code:"+phone, code, time.Minute*5)
 
 	if err := send.Sms(phone, "오상중학교 회원가입 본인확인 인증코드는 ["+code+"]입니다."); err != nil {
 		return err
 	}
 
 	cnt++
-	cache.Add("cnt:"+ip, utils.TimeLeftUntilMidnight(), cnt)
+	redis.C.Set("phone_verify:cnt:"+ip, cnt, 0)
+	redis.C.ExpireAt("phone_verify:cnt:"+ip, utils.TodayTimeNoon())
 	return nil
 }
 
 // PhoneVerifyCheck check phone verify code is correct
 func PhoneVerifyCheck(phone, code string) (string, error) {
-	cache := cache2go.Cache("phoneVerify")
-	res, err := cache.Value(phone)
+
+	str, err := redis.C.Get("phone_verify:code:" + phone).Result()
 	if err != nil {
+		if redis.IsNil(err) {
+			return "", errors.New(errors.ErrBadRequest, "not valid code")
+		}
 		return "", err
-	} else if res.Data().(string) != code {
-		return "", fmt.Errorf("Not Valid Code")
+	}
+	if str != code {
+		return "", errors.New(errors.ErrBadRequest, "not valid code")
 	}
 
 	signupCode := utils.CreateRandomString(6)
-	cache.Add("signup:"+signupCode, time.Hour, phone)
+	redis.C.Set("phone_verify:signup:"+signupCode, phone, time.Hour)
 	return signupCode, nil
 }
 
 // PhoneSignUpCheck load phone number from phone signup code
 func PhoneSignUpCheck(code string) (string, error) {
-	cache := cache2go.Cache("phoneVerify")
-	res, err := cache.Value("signup:" + code)
+	phone, err := redis.C.Get("phone_verify:signup:" + code).Result()
 	if err != nil {
-		return "", err
+		if redis.IsNil(err) {
+			return "", errors.New(errors.ErrBadRequest, "not valid code")
+		}
+		return "", errors.New(errors.ErrServer, err.Error())
 	}
-	return res.Data().(string), nil
+	return phone, nil
 }
 
 // CheckStudentDup exits = true, not exits = false

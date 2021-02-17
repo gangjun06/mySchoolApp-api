@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/muesli/cache2go"
+	"github.com/osang-school/backend/graph/errors"
 	"github.com/osang-school/backend/graph/generated"
 	"github.com/osang-school/backend/graph/model"
 	"github.com/osang-school/backend/internal/neis"
@@ -25,7 +26,7 @@ func (r *mutationResolver) VerifyPhone(ctx context.Context, number model.Phone) 
 	if err != nil {
 		return "", err
 	} else if exits {
-		return "", fmt.Errorf("Already Exits")
+		return "", errors.New(errors.ErrDuplicate, "")
 	}
 	return "", user.PhoneVerifyCode("ip", string(number))
 }
@@ -35,14 +36,14 @@ func (r *mutationResolver) CheckVerifyPhoneCode(ctx context.Context, number mode
 }
 
 func (r *mutationResolver) SetProfile(ctx context.Context, student *model.StudentProfileInput, teacher *model.TeacherProfileInput, officals *model.OfficalsProfileInput) (string, error) {
-	cache := cache2go.Cache("profile")
 	randomStr := utils.CreateRandomString(6)
+	cache := cache2go.Cache("profile")
 	if student != nil {
 		exits, err := user.CheckStudentDup(student.Grade, student.Class, student.Number)
 		if err != nil {
 			return "", err
 		} else if exits {
-			return "", fmt.Errorf("Already Exits")
+			return "", errors.New(errors.ErrDuplicate, "")
 		}
 		cache.Add(randomStr, time.Minute*1, student)
 	} else if teacher != nil {
@@ -50,7 +51,7 @@ func (r *mutationResolver) SetProfile(ctx context.Context, student *model.Studen
 	} else if officals != nil {
 		cache.Add(randomStr, time.Minute*1, officals)
 	} else {
-		return "", fmt.Errorf("Bad Request")
+		return "", errors.New(errors.ErrBadRequest, "")
 	}
 	return randomStr, nil
 }
@@ -63,8 +64,10 @@ func (r *mutationResolver) SignUp(ctx context.Context, input model.SignUpInput) 
 	cache := cache2go.Cache("profile")
 	res, err := cache.Value(input.Detail)
 	if err != nil {
-		return nil, err
+		return nil, errors.New(errors.ErrBadRequest, "")
 	}
+	detailData := res.Data()
+
 	newUser := &user.User{
 		Name:     input.Name,
 		Phone:    phone,
@@ -74,7 +77,6 @@ func (r *mutationResolver) SignUp(ctx context.Context, input model.SignUpInput) 
 	if input.Nickname != nil {
 		newUser.Nickname = *input.Nickname
 	}
-	detailData := res.Data()
 	var resultDetail interface{}
 	switch v := detailData.(type) {
 	case *model.StudentProfileInput:

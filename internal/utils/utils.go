@@ -16,6 +16,13 @@ func TimeLeftUntilMidnight() time.Duration {
 	return time.Now().Sub(midnight)
 }
 
+func TodayTimeNoon() time.Time {
+	t := time.Now().AddDate(0, 0, 1)
+	timezone, _ := time.LoadLocation("Asia/Seoul")
+	midnight := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, timezone)
+	return midnight
+}
+
 func CreateRandomString(length int) string {
 	chars := []rune("ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
 		"abcdefghijklmnopqrstuvwxyz" +

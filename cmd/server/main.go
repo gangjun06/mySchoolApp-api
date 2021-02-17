@@ -17,6 +17,7 @@ import (
 	"github.com/osang-school/backend/graph/generated"
 	"github.com/osang-school/backend/internal/conf"
 	"github.com/osang-school/backend/internal/db/mongodb"
+	"github.com/osang-school/backend/internal/db/redis"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 )
 
@@ -26,6 +27,7 @@ func main() {
 	port := conf.Get().Server.Port
 
 	mongodb.Init()
+	redis.Init()
 
 	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: &graph.Resolver{}}))
 	srv.SetErrorPresenter(func(ctx context.Context, e error) *gqlerror.Error {
