@@ -3,7 +3,11 @@ directive @auth(
   reqPermission: [Permission!]
 ) on FIELD_DEFINITION
 
-union ProfileDetail = StudentProfile | TeacherProfile | OfficalsProfile
+union ProfileDetail =
+    StudentProfile
+  | TeacherProfile
+  | OfficalsProfile
+  | AnonProfile
 
 enum UserStatus {
   WAIT
@@ -48,6 +52,10 @@ input TeacherProfileInput {
 type OfficalsProfile {
   role: String!
   description: String!
+}
+
+type AnonProfile {
+  dummy: Nothing
 }
 
 input OfficalsProfileInput {

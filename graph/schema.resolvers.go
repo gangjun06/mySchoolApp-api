@@ -188,7 +188,12 @@ func (r *mutationResolver) CreatePost(ctx context.Context, input model.NewPost) 
 		}
 	}
 
-	id, err := post.NewPost(primitive.ObjectID(input.Category), user.ID, input.Title, input.Content)
+	anon := false
+	if *input.Anon {
+		anon = true
+	}
+
+	id, err := post.NewPost(primitive.ObjectID(input.Category), user.ID, input.Title, input.Content, anon)
 	return model.ObjectID(id), err
 }
 
@@ -261,7 +266,7 @@ func (r *queryResolver) Post(ctx context.Context, id model.ObjectID, comment *mo
 		}
 	}
 
-	data, err := post.GetPost(primitive.ObjectID(id), loadPost, offset, limit)
+	data, err := post.GetPost(primitive.ObjectID(id), userData.ID, loadPost, offset, limit)
 	if err != nil {
 		return nil, err
 	}
@@ -280,8 +285,8 @@ func (r *queryResolver) Post(ctx context.Context, id model.ObjectID, comment *mo
 			ID:   model.ObjectID(data.CategoryData.ID),
 			Name: data.CategoryData.Name,
 		},
-		Like:     0,
-		IsLike:   true,
+		Like:     data.LikeCnt,
+		IsLike:   data.IsLike,
 		Author:   user.UserToGqlType(data.AuthorData),
 		Title:    data.Title,
 		Content:  data.Content,

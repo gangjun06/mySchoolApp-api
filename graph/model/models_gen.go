@@ -12,6 +12,12 @@ type ProfileDetail interface {
 	IsProfileDetail()
 }
 
+type AnonProfile struct {
+	Dummy *string `json:"dummy"`
+}
+
+func (AnonProfile) IsProfileDetail() {}
+
 type Cafeteria struct {
 	Type     CafeteriaType `json:"type"`
 	Calorie  string        `json:"calorie"`

@@ -26,9 +26,12 @@ type (
 	PostStatus uint8
 	Post       struct {
 		ID           primitive.ObjectID   `bson:"_id,omitempty"`
+		Anon         bool                 `bson:"anon,omitempty"`
 		Category     primitive.ObjectID   `bson:"category,omitempty"`
-		CategoryData *Category            `bson:"categoryData, omitempty"`
-		Like         []primitive.ObjectID `bson:"like,omitempty"`
+		CategoryData *Category            `bson:"categoryData,omitempty"`
+		Like         []primitive.ObjectID `bson:"likeUsers,omitempty"`
+		LikeCnt      int                  `bson:"likeCnt,omitempty"`
+		IsLike       bool                 `bson:"isLike,omitempty"`
 		Author       primitive.ObjectID   `bson:"author,omitempty"`
 		AuthorData   *user.User           `bson:"authorData,omitempty"`
 		Status       PostStatus           `bson:"status,omitempty"`
@@ -119,6 +122,7 @@ func GetCategory(id primitive.ObjectID) (*Category, error) {
 
 func GetCategoryByPost(id primitive.ObjectID) (*Category, error) {
 	pipeline := mongo.Pipeline{
+		bson.D{{"$match", bson.M{"_id": id}}},
 		bson.D{{"$lookup", bson.D{{"from", "category"}, {"localField", "category"}, {"foreignField", "_id"}, {"as", "category"}}}},
 		bson.D{{"$unwind", "$category"}},
 		bson.D{{"$project", bson.M{"category": 1}}},
@@ -148,7 +152,7 @@ func CategoryExits(id primitive.ObjectID) (bool, error) {
 	return true, nil
 }
 
-func NewPost(categoryID, author primitive.ObjectID, title, content string) (primitive.ObjectID, error) {
+func NewPost(categoryID, author primitive.ObjectID, title, content string, anon bool) (primitive.ObjectID, error) {
 	post := &Post{
 		Author:   author,
 		Category: categoryID,
@@ -156,6 +160,8 @@ func NewPost(categoryID, author primitive.ObjectID, title, content string) (prim
 		Content:  content,
 		CreateAt: time.Now(),
 		UpdateAt: time.Now(),
+		Anon:     anon,
+		Status:   StatusNormal,
 	}
 	result, err := mongodb.Post.InsertOne(nil, post)
 	if err != nil {
@@ -165,14 +171,16 @@ func NewPost(categoryID, author primitive.ObjectID, title, content string) (prim
 }
 
 // GetPost (postid, loadPost, commentOffset, commentLimit)
-func GetPost(id primitive.ObjectID, loadPost bool, comment ...int) (*Post, error) {
+func GetPost(id, userID primitive.ObjectID, loadPost bool, comment ...int) (*Post, error) {
 	commentOffset := 0
 	commentLimit := 0
 	if len(comment) == 2 {
 		commentOffset = comment[0]
 		commentLimit = comment[1]
 	}
-	pipeline := mongo.Pipeline{}
+	pipeline := mongo.Pipeline{
+		bson.D{{"$match", bson.M{"_id": id}}},
+	}
 	if loadPost {
 		pipeline = append(pipeline, mongo.Pipeline{
 			bson.D{{"$lookup", bson.D{{"from", "category"}, {"localField", "category"}, {"foreignField", "_id"}, {"as", "categoryData"}}}},
@@ -188,11 +196,17 @@ func GetPost(id primitive.ObjectID, loadPost bool, comment ...int) (*Post, error
 		}
 	} else {
 		pipeline = append(pipeline, mongo.Pipeline{
-			bson.D{{"$unwind", "$comment"}},
+			bson.D{{"$unwind", bson.M{
+				"path":                       "$comment",
+				"preserveNullAndEmptyArrays": true,
+			}}},
 			bson.D{{"$skip", commentOffset}},
 			bson.D{{"$limit", commentLimit}},
 			bson.D{{"$lookup", bson.D{{"from", "user"}, {"localField", "comment.author"}, {"foreignField", "_id"}, {"as", "comment.authorData"}}}},
-			bson.D{{"$unwind", "$comment.authorData"}},
+			bson.D{{"$unwind", bson.M{
+				"path":                       "$comment.authorData",
+				"preserveNullAndEmptyArrays": true,
+			}}},
 			bson.D{{"$group", bson.M{
 				"_id":     "$_id",
 				"root":    bson.M{"$mergeObjects": "$$ROOT"},
@@ -204,9 +218,28 @@ func GetPost(id primitive.ObjectID, loadPost bool, comment ...int) (*Post, error
 				},
 			},
 			}},
-			bson.D{{"$project", bson.M{"root": 0}}},
+			bson.D{{"$project", bson.M{
+				"root": 0,
+			}}},
+			bson.D{{"$set", bson.M{
+				"likeCnt": bson.M{
+					"$cond": bson.M{
+						"if":   bson.M{"$eq": bson.A{"$likeUsers", nil}},
+						"then": bson.M{"$size": "$likeUsers"},
+						"else": 0,
+					},
+				},
+				"isLike": bson.M{
+					"$cond": bson.M{
+						"if":   bson.M{"$eq": bson.A{"$likeUsers", nil}},
+						"then": bson.M{"$in": bson.A{userID, "$likeUsers"}},
+						"else": false,
+					},
+				},
+			}}},
 		}...)
 	}
+	pipeline = append(pipeline, bson.D{{"$project", bson.M{"like": 0}}})
 
 	cursor, err := mongodb.Post.Aggregate(nil, pipeline)
 	if err != nil {
@@ -219,21 +252,31 @@ func GetPost(id primitive.ObjectID, loadPost bool, comment ...int) (*Post, error
 	if len(post) < 1 {
 		return nil, myerr.New(myerr.ErrNotFound, "")
 	}
+	if len(post[0].Comment) == 1 && post[0].Comment[0].Content == "" {
+		post[0].Comment = []*Comment{}
+	}
+	if post[0].Anon {
+		post[0].AuthorData = &user.User{
+			Name:   "익명",
+			Role:   user.RoleAnon,
+			Status: user.StatusUser,
+			Phone:  "01000000000",
+		}
+	}
 	return &post[0], nil
 }
 
 func PostLike(postID, user primitive.ObjectID, status bool) error {
 	filter := bson.M{"_id": postID}
-	update := bson.M{"$push": bson.M{
-		"like": user,
+	update := bson.M{"$addToSet": bson.M{
+		"likeUsers": user,
 	}}
-	option := options.Update().SetUpsert(true)
 	if !status {
 		update = bson.M{"$pull": bson.M{
-			"text": user,
+			"likeUsers": user,
 		}}
 	}
-	_, err := mongodb.Post.UpdateOne(nil, filter, update, option)
+	_, err := mongodb.Post.UpdateMany(nil, filter, update)
 	if err != nil {
 		return myerr.New(myerr.ErrServer, err.Error())
 	}
@@ -244,7 +287,6 @@ func NewComment(postID, author primitive.ObjectID, content string) (primitive.Ob
 	filter := bson.M{"_id": postID}
 	objectID := primitive.NewObjectID()
 	update := bson.M{"$push": bson.M{
-
 		"comment": bson.M{
 			"_id":      objectID,
 			"author":   author,

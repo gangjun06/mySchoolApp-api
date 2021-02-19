@@ -43,12 +43,15 @@ type (
 		Role        string `bson:"role,omitempty"`
 		Description string `bson:"description,omitempty"`
 	}
+	Anon struct {
+	}
 )
 
 const (
 	RoleStudent Role = iota + 1
 	RoleTeacher
 	RoleOfficals
+	RoleAnon
 )
 
 const (
@@ -194,6 +197,8 @@ func DetailToUnion(d interface{}) model.ProfileDetail {
 			Role:        v.Role,
 			Description: v.Description,
 		}
+	default:
+		result = model.AnonProfile{}
 	}
 	return result
 }
@@ -225,6 +230,17 @@ func UserToGqlType(u *User) *model.Profile {
 			Class:  u.Student.Class,
 			Number: u.Student.Number,
 		}
+	case RoleOfficals:
+		profile.Detail = model.OfficalsProfile{
+			Role:        u.Officals.Role,
+			Description: u.Officals.Description,
+		}
+	case RoleTeacher:
+		profile.Detail = model.TeacherProfile{
+			Subject: u.Teacher.Subject,
+		}
+	case RoleAnon:
+		profile.Detail = model.AnonProfile{}
 	}
 	return profile
 }

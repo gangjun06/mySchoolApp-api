@@ -45,6 +45,10 @@ type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
+	AnonProfile struct {
+		Dummy func(childComplexity int) int
+	}
+
 	Cafeteria struct {
 		Calorie  func(childComplexity int) int
 		Content  func(childComplexity int) int
@@ -163,6 +167,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	ec := executionContext{nil, e}
 	_ = ec
 	switch typeName + "." + field {
+
+	case "AnonProfile.dummy":
+		if e.complexity.AnonProfile.Dummy == nil {
+			break
+		}
+
+		return e.complexity.AnonProfile.Dummy(childComplexity), true
 
 	case "Cafeteria.calorie":
 		if e.complexity.Cafeteria.Calorie == nil {
@@ -650,7 +661,11 @@ var sources = []*ast.Source{
   reqPermission: [Permission!]
 ) on FIELD_DEFINITION
 
-union ProfileDetail = StudentProfile | TeacherProfile | OfficalsProfile
+union ProfileDetail =
+    StudentProfile
+  | TeacherProfile
+  | OfficalsProfile
+  | AnonProfile
 
 enum UserStatus {
   WAIT
@@ -695,6 +710,10 @@ input TeacherProfileInput {
 type OfficalsProfile {
   role: String!
   description: String!
+}
+
+type AnonProfile {
+  dummy: Nothing
 }
 
 input OfficalsProfileInput {
@@ -1135,6 +1154,38 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 // endregion ************************** directives.gotpl **************************
 
 // region    **************************** field.gotpl *****************************
+
+func (ec *executionContext) _AnonProfile_dummy(ctx context.Context, field graphql.CollectedField, obj *model.AnonProfile) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "AnonProfile",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Dummy, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalONothing2ᚖstring(ctx, field.Selections, res)
+}
 
 func (ec *executionContext) _Cafeteria_type(ctx context.Context, field graphql.CollectedField, obj *model.Cafeteria) (ret graphql.Marshaler) {
 	defer func() {
@@ -4721,6 +4772,13 @@ func (ec *executionContext) _ProfileDetail(ctx context.Context, sel ast.Selectio
 			return graphql.Null
 		}
 		return ec._OfficalsProfile(ctx, sel, obj)
+	case model.AnonProfile:
+		return ec._AnonProfile(ctx, sel, &obj)
+	case *model.AnonProfile:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._AnonProfile(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}
@@ -4729,6 +4787,30 @@ func (ec *executionContext) _ProfileDetail(ctx context.Context, sel ast.Selectio
 // endregion ************************** interface.gotpl ***************************
 
 // region    **************************** object.gotpl ****************************
+
+var anonProfileImplementors = []string{"AnonProfile", "ProfileDetail"}
+
+func (ec *executionContext) _AnonProfile(ctx context.Context, sel ast.SelectionSet, obj *model.AnonProfile) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, anonProfileImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AnonProfile")
+		case "dummy":
+			out.Values[i] = ec._AnonProfile_dummy(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
 
 var cafeteriaImplementors = []string{"Cafeteria"}
 
