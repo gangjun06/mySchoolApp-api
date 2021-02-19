@@ -16,6 +16,8 @@ var client *mongo.Client
 var db *mongo.Database
 
 var User *mongo.Collection
+var Category *mongo.Collection
+var Post *mongo.Collection
 
 func Init() {
 	var err error
@@ -36,6 +38,8 @@ func Init() {
 
 	db = client.Database("osang")
 	User = db.Collection("user")
+	Category = db.Collection("category")
+	Post = db.Collection("post")
 
 	_, err = User.Indexes().CreateOne(
 		context.Background(),
@@ -44,6 +48,15 @@ func Init() {
 			Options: options.Index().SetUnique(true),
 		},
 	)
+
+	_, err = Category.Indexes().CreateOne(
+		context.Background(),
+		mongo.IndexModel{
+			Keys:    bson.M{"name": 1},
+			Options: options.Index().SetUnique(true),
+		},
+	)
+
 	if err != nil {
 		log.Fatalln(err)
 	}

@@ -13,9 +13,11 @@ import (
 	"github.com/osang-school/backend/graph/model"
 	"github.com/osang-school/backend/graph/myerr"
 	"github.com/osang-school/backend/internal/neis"
+	"github.com/osang-school/backend/internal/post"
 	"github.com/osang-school/backend/internal/session"
 	"github.com/osang-school/backend/internal/user"
 	"github.com/osang-school/backend/internal/utils"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func (r *mutationResolver) SignIn(ctx context.Context, phone model.Phone, password string) (*model.ProfileWithToken, error) {
@@ -23,7 +25,7 @@ func (r *mutationResolver) SignIn(ctx context.Context, phone model.Phone, passwo
 	if err != nil {
 		return nil, err
 	}
-	token, err := session.CreateToken(userData.ID, &userData.Permissions)
+	token, err := session.CreateToken(userData.ID, userData.Role, userData.Permissions)
 	if err != nil {
 		return nil, err
 	}
@@ -34,7 +36,10 @@ func (r *mutationResolver) SignIn(ctx context.Context, phone model.Phone, passwo
 }
 
 func (r *mutationResolver) SignOut(ctx context.Context) (string, error) {
-	panic(fmt.Errorf("not implemented"))
+	if err := ctx.Value("data").(*session.Data).Expiry(); err != nil {
+		return "", myerr.New(myerr.ErrServer, err.Error())
+	}
+	return "", nil
 }
 
 func (r *mutationResolver) VerifyPhone(ctx context.Context, number model.Phone) (string, error) {
@@ -125,11 +130,12 @@ func (r *mutationResolver) SignUp(ctx context.Context, input model.SignUpInput) 
 		return nil, fmt.Errorf("Error While Signup")
 	}
 
+	phoneResult := model.Phone(newUser.Phone)
 	profile := &model.Profile{
 		ID:       model.ObjectID(id),
 		Name:     newUser.Name,
 		Nickname: newUser.Nickname,
-		Phone:    model.Phone(newUser.Phone),
+		Phone:    &phoneResult,
 		Status:   user.StatusToEnum(user.StatusWait),
 		Detail:   user.DetailToUnion(resultDetail),
 	}
@@ -139,6 +145,82 @@ func (r *mutationResolver) SignUp(ctx context.Context, input model.SignUpInput) 
 		Token:   "",
 	}
 	return result, nil
+}
+
+func (r *mutationResolver) CreateCategory(ctx context.Context, input model.NewCategory) (model.ObjectID, error) {
+	convert := func(i model.UserRole) user.Role {
+		switch i {
+		case model.UserRoleStudent:
+			return user.RoleStudent
+		case model.UserRoleTeacher:
+			return user.RoleTeacher
+		case model.UserRoleOfficals:
+			return user.RoleOfficals
+		}
+		return user.RoleOfficals
+	}
+	category := &post.Category{
+		Name:          input.Name,
+		ReqPermission: input.ReqPermission,
+		AnonAble:      input.AnonAble,
+	}
+	for _, v := range input.ReadAbleRole {
+		category.ReadAbleRole = append(category.ReadAbleRole, convert(v))
+	}
+	for _, v := range input.WriteAbleRole {
+		category.WriteAbleRole = append(category.WriteAbleRole, convert(v))
+	}
+
+	id, err := post.NewCategory(category)
+	if err != nil {
+		return model.ObjectID(primitive.NilObjectID), err
+	}
+	return model.ObjectID(id), nil
+}
+
+func (r *mutationResolver) CreatePost(ctx context.Context, input model.NewPost) (model.ObjectID, error) {
+	user := ctx.Value("data").(*session.Data)
+	if category, err := post.GetCategory(primitive.ObjectID(input.Category)); err != nil {
+		return model.ObjectID(primitive.NilObjectID), err
+	} else {
+		if ok := post.CheckUserPermission("write", category, user.Role, user.Permission); !ok {
+			return model.ObjectID(primitive.NilObjectID), myerr.New(myerr.ErrPermission, "")
+		}
+	}
+
+	id, err := post.NewPost(primitive.ObjectID(input.Category), user.ID, input.Title, input.Content)
+	return model.ObjectID(id), err
+}
+
+func (r *mutationResolver) LikePost(ctx context.Context, input model.LikePostInput) (*string, error) {
+	user := ctx.Value("data").(*session.Data)
+	if category, err := post.GetCategoryByPost(primitive.ObjectID(input.Post)); err != nil {
+		return nil, err
+	} else {
+		if ok := post.CheckUserPermission("read", category, user.Role, user.Permission); !ok {
+			return nil, myerr.New(myerr.ErrPermission, "")
+		}
+	}
+	data := ctx.Value("data").(*session.Data)
+	err := post.PostLike(primitive.ObjectID(input.Post), data.ID, input.Status)
+	return nil, err
+}
+
+func (r *mutationResolver) AddComment(ctx context.Context, input model.NewComment) (model.ObjectID, error) {
+	user := ctx.Value("data").(*session.Data)
+	if category, err := post.GetCategoryByPost(primitive.ObjectID(input.Post)); err != nil {
+		return model.ObjectID(primitive.NilObjectID), err
+	} else {
+		if ok := post.CheckUserPermission("read", category, user.Role, user.Permission); !ok {
+			return model.ObjectID(primitive.NilObjectID), myerr.New(myerr.ErrPermission, "")
+		}
+	}
+	id, err := post.NewComment(primitive.ObjectID(input.Post), user.ID, input.Content)
+	return model.ObjectID(id), err
+}
+
+func (r *mutationResolver) DeleteComment(ctx context.Context, id model.ObjectID) (model.ObjectID, error) {
+	panic(fmt.Errorf("not implemented"))
 }
 
 func (r *queryResolver) MyProfile(ctx context.Context) (*model.Profile, error) {
@@ -152,6 +234,61 @@ func (r *queryResolver) Cafeteria(ctx context.Context, filter *model.CafeteriaFi
 	}
 
 	return neis.GetCafeteria(filter)
+}
+
+func (r *queryResolver) Post(ctx context.Context, id model.ObjectID, comment *model.CommentFilter) (*model.Post, error) {
+	userData := ctx.Value("data").(*session.Data)
+	if category, err := post.GetCategoryByPost(primitive.ObjectID(id)); err != nil {
+		return nil, err
+	} else {
+		if ok := post.CheckUserPermission("write", category, userData.Role, userData.Permission); !ok {
+			return nil, myerr.New(myerr.ErrPermission, "")
+		}
+	}
+
+	loadPost := true
+	offset := 0
+	limit := 20
+	if comment != nil {
+		if *comment.LoadOnlyComment {
+			loadPost = false
+		}
+		if comment.Offset != nil {
+			offset = *comment.Offset
+		}
+		if comment.Limit != nil {
+			limit = *comment.Limit
+		}
+	}
+
+	data, err := post.GetPost(primitive.ObjectID(id), loadPost, offset, limit)
+	if err != nil {
+		return nil, err
+	}
+	resultComment := []*model.Comment{}
+	for _, v := range data.Comment {
+		resultComment = append(resultComment, &model.Comment{
+			ID:       model.ObjectID(v.ID),
+			Content:  v.Content,
+			CreateAt: model.Timestamp(v.CreateAt),
+			UpdateAt: model.Timestamp(v.UpdateAt),
+		})
+	}
+	return &model.Post{
+		ID: model.ObjectID(data.ID),
+		Category: &model.Category{
+			ID:   model.ObjectID(data.CategoryData.ID),
+			Name: data.CategoryData.Name,
+		},
+		Like:     0,
+		IsLike:   true,
+		Author:   user.UserToGqlType(data.AuthorData),
+		Title:    data.Title,
+		Content:  data.Content,
+		CreateAt: model.Timestamp(data.CreateAt),
+		UpdateAt: model.Timestamp(data.UpdateAt),
+		Comment:  resultComment,
+	}, nil
 }
 
 // Mutation returns generated.MutationResolver implementation.

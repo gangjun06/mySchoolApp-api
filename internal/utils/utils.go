@@ -63,3 +63,24 @@ func CheckPassword(normal, hashed string) bool {
 	}
 	return true
 }
+
+func ArrayHasItem(list []string, item string) bool {
+	for _, v := range list {
+		if v == item {
+			return true
+		}
+	}
+	return false
+}
+
+func HasPermission(req []string, user []string) bool {
+	if ok := ArrayHasItem(user, "admin"); ok {
+		return true
+	}
+	for _, v := range req {
+		if ok := ArrayHasItem(user, v); !ok {
+			return false
+		}
+	}
+	return true
+}

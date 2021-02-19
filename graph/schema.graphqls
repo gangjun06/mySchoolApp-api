@@ -1,4 +1,7 @@
-directive @auth(getInfo: Boolean, reqPermission: [Permission!]) on FIELD_DEFINITION
+directive @auth(
+  getInfo: Boolean
+  reqPermission: [Permission!]
+) on FIELD_DEFINITION
 
 union ProfileDetail = StudentProfile | TeacherProfile | OfficalsProfile
 
@@ -8,11 +11,17 @@ enum UserStatus {
   BAN
 }
 
+enum UserRole {
+  Student
+  Teacher
+  Officals
+}
+
 type Profile {
   id: ObjectID!
   name: String!
   nickname: String!
-  phone: Phone!
+  phone: Phone
   detail: ProfileDetail!
   status: UserStatus!
 }
@@ -80,23 +89,91 @@ type ProfileWithToken {
   token: JWT!
 }
 
+type Category {
+  id: ObjectID!
+  name: String!
+}
+
+type Post {
+  id: ObjectID!
+  category: Category!
+  like: Int!
+  isLike: Boolean!
+  author: Profile!
+  title: String!
+  content: String!
+  createAt: Timestamp!
+  updateAt: Timestamp!
+  comment: [Comment!]
+}
+
+type Comment {
+  id: ObjectID!
+  author: Profile!
+  content: String!
+  createAt: Timestamp!
+  updateAt: Timestamp!
+}
+
+input NewCategory {
+  name: String!
+  reqPermission: [String!]!
+  anonAble: Boolean!
+  readAbleRole: [UserRole!]!
+  writeAbleRole: [UserRole!]!
+}
+
+input NewPost {
+  category: ObjectID!
+  title: String!
+  content: String!
+  anon: Boolean
+}
+
+input NewComment {
+  post: ObjectID!
+  content: String!
+}
+
+input CommentFilter {
+  limit: Int
+  offset: Int
+  loadOnlyComment: Boolean
+}
+
+input LikePostInput {
+  post: ObjectID!
+  status: Boolean!
+}
+
 type Query {
   myProfile: Profile @auth(getInfo: true)
   cafeteria(filter: CafeteriaFilter): [Cafeteria!]!
+  post(id: ObjectID!, comment: CommentFilter): Post! @auth(getInfo: true)
 }
 
 type Mutation {
   signIn(phone: Phone!, password: String!): ProfileWithToken!
-  signOut: Nothing!
+  signOut: Nothing! @auth
   verifyPhone(number: Phone!): String!
   checkVerifyPhoneCode(number: Phone!, code: String!): SignUpPhoneCode!
-  setProfile(student:StudentProfileInput, teacher:TeacherProfileInput, officals:OfficalsProfileInput): ProfileCode!
+  setProfile(
+    student: StudentProfileInput
+    teacher: TeacherProfileInput
+    officals: OfficalsProfileInput
+  ): ProfileCode!
   signUp(input: SignUpInput!): ProfileWithToken
+  createCategory(input: NewCategory!): ObjectID! @auth(reqPermission: ["admin"])
+
+  createPost(input: NewPost!): ObjectID! @auth(getInfo: true)
+  likePost(input: LikePostInput!): Nothing @auth(getInfo: true)
+  addComment(input: NewComment!): ObjectID! @auth(getInfo: true)
+  deleteComment(id: ObjectID!): ObjectID! @auth
 }
 
 scalar Phone
 scalar SignUpPhoneCode
-scalar ProfileCode 
+scalar ProfileCode
 scalar ObjectID
 scalar Timestamp
 scalar JWT

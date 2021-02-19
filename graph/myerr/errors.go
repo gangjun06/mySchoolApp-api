@@ -49,7 +49,7 @@ func Parse(err error) (error, bool) {
 	if len(spl2) < 2 || ErrorCodeDescription[ErrorCode(spl2[0])] == "" {
 		return nil, false
 	}
-	return New(ErrorCode(spl2[0]), strings.Join(spl2[1:], "")), true
+	return New(ErrorCode(spl2[0]), strings.Join(spl2[1:], ": ")), true
 }
 
 func (e *Error) Error() string {

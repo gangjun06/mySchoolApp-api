@@ -27,6 +27,50 @@ type CafeteriaFilter struct {
 	Type      *CafeteriaType `json:"type"`
 }
 
+type Category struct {
+	ID   ObjectID `json:"id"`
+	Name string   `json:"name"`
+}
+
+type Comment struct {
+	ID       ObjectID  `json:"id"`
+	Author   *Profile  `json:"author"`
+	Content  string    `json:"content"`
+	CreateAt Timestamp `json:"createAt"`
+	UpdateAt Timestamp `json:"updateAt"`
+}
+
+type CommentFilter struct {
+	Limit           *int  `json:"limit"`
+	Offset          *int  `json:"offset"`
+	LoadOnlyComment *bool `json:"loadOnlyComment"`
+}
+
+type LikePostInput struct {
+	Post   ObjectID `json:"post"`
+	Status bool     `json:"status"`
+}
+
+type NewCategory struct {
+	Name          string     `json:"name"`
+	ReqPermission []string   `json:"reqPermission"`
+	AnonAble      bool       `json:"anonAble"`
+	ReadAbleRole  []UserRole `json:"readAbleRole"`
+	WriteAbleRole []UserRole `json:"writeAbleRole"`
+}
+
+type NewComment struct {
+	Post    ObjectID `json:"post"`
+	Content string   `json:"content"`
+}
+
+type NewPost struct {
+	Category ObjectID `json:"category"`
+	Title    string   `json:"title"`
+	Content  string   `json:"content"`
+	Anon     *bool    `json:"anon"`
+}
+
 type OfficalsProfile struct {
 	Role        string `json:"role"`
 	Description string `json:"description"`
@@ -39,11 +83,24 @@ type OfficalsProfileInput struct {
 	Description *string `json:"description"`
 }
 
+type Post struct {
+	ID       ObjectID   `json:"id"`
+	Category *Category  `json:"category"`
+	Like     int        `json:"like"`
+	IsLike   bool       `json:"isLike"`
+	Author   *Profile   `json:"author"`
+	Title    string     `json:"title"`
+	Content  string     `json:"content"`
+	CreateAt Timestamp  `json:"createAt"`
+	UpdateAt Timestamp  `json:"updateAt"`
+	Comment  []*Comment `json:"comment"`
+}
+
 type Profile struct {
 	ID       ObjectID      `json:"id"`
 	Name     string        `json:"name"`
 	Nickname string        `json:"nickname"`
-	Phone    Phone         `json:"phone"`
+	Phone    *Phone        `json:"phone"`
 	Detail   ProfileDetail `json:"detail"`
 	Status   UserStatus    `json:"status"`
 }
@@ -125,6 +182,49 @@ func (e *CafeteriaType) UnmarshalGQL(v interface{}) error {
 }
 
 func (e CafeteriaType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type UserRole string
+
+const (
+	UserRoleStudent  UserRole = "Student"
+	UserRoleTeacher  UserRole = "Teacher"
+	UserRoleOfficals UserRole = "Officals"
+)
+
+var AllUserRole = []UserRole{
+	UserRoleStudent,
+	UserRoleTeacher,
+	UserRoleOfficals,
+}
+
+func (e UserRole) IsValid() bool {
+	switch e {
+	case UserRoleStudent, UserRoleTeacher, UserRoleOfficals:
+		return true
+	}
+	return false
+}
+
+func (e UserRole) String() string {
+	return string(e)
+}
+
+func (e *UserRole) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = UserRole(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid UserRole", str)
+	}
+	return nil
+}
+
+func (e UserRole) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 

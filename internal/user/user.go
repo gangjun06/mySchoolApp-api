@@ -114,7 +114,7 @@ func PhoneSignUpCheck(code string) (string, error) {
 	return phone, nil
 }
 
-// CheckStudentDup exits = true, not exits = false
+// ChutheckStudentDup exits = true, not exits = false
 func CheckStudentDup(grade, class, number int) (bool, error) {
 	filter := bson.M{"student.grade": grade, "student.class": class, "student.number": number}
 	var result User
@@ -210,11 +210,12 @@ func StatusToEnum(s Status) model.UserStatus {
 }
 
 func UserToGqlType(u *User) *model.Profile {
+	phone := model.Phone(u.Phone)
 	profile := &model.Profile{
 		ID:       model.ObjectID(u.ID),
 		Name:     u.Name,
 		Nickname: u.Nickname,
-		Phone:    model.Phone(u.Phone),
+		Phone:    &phone,
 		Status:   StatusToEnum(u.Status),
 	}
 	switch u.Role {

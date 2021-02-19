@@ -39,9 +39,9 @@ func main() {
 			return nil, err
 		}
 
-		hasItem := func(list *[]string, target string) bool {
-			for _, v := range *list {
-				if v == target {
+		hasItem := func(list []string, target string) bool {
+			for _, v := range list {
+				if v == target || v == "admin" {
 					return true
 				}
 			}
@@ -62,6 +62,7 @@ func main() {
 			ctx = context.WithValue(ctx, "user", user)
 		}
 
+		ctx = context.WithValue(ctx, "data", data)
 		return next(ctx)
 	}
 
