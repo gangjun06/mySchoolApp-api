@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/99designs/gqlgen/graphql"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -92,4 +93,21 @@ func (o *Timestamp) UnmarshalGQL(v interface{}) error {
 	default:
 		return ErrNotCorrectInput
 	}
+}
+
+func MarshalUint(i uint) graphql.Marshaler {
+	return graphql.WriterFunc(func(w io.Writer) {
+		io.WriteString(w, fmt.Sprintf("%d", i))
+	})
+}
+
+func UnmarshalUint(v interface{}) (uint, error) {
+	switch v := v.(type) {
+	case int:
+	case int64:
+		return uint(v), nil
+	default:
+		return 0, fmt.Errorf("%T is not an int", v)
+	}
+	return 0, fmt.Errorf("error")
 }

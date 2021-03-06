@@ -12,6 +12,7 @@ import (
 	"github.com/osang-school/backend/graph/generated"
 	"github.com/osang-school/backend/graph/model"
 	"github.com/osang-school/backend/graph/myerr"
+	"github.com/osang-school/backend/internal/info"
 	"github.com/osang-school/backend/internal/neis"
 	"github.com/osang-school/backend/internal/post"
 	"github.com/osang-school/backend/internal/session"
@@ -240,6 +241,33 @@ func (r *mutationResolver) DeleteComment(ctx context.Context, postid model.Objec
 	return "", post.DeleteComment(primitive.ObjectID(postid), primitive.ObjectID(commentid))
 }
 
+func (r *mutationResolver) AddCalendar(ctx context.Context, input model.NewCalendar) (model.ObjectID, error) {
+	objID, err := info.NewCalendar(uint(input.Year), uint(input.Month), uint(input.Day), input.Title, input.Description, input.Icon)
+	return model.ObjectID(objID), err
+}
+
+func (r *mutationResolver) DeleteCalendar(ctx context.Context, target model.ObjectID) (string, error) {
+	return "", info.DeleteCalendar(primitive.ObjectID(target))
+}
+
+func (r *mutationResolver) UpdateSchedule(ctx context.Context, input model.UpdateSchedule) (string, error) {
+	data := info.UpdateScheduleInput{
+		uint(input.Grade),
+		uint(input.Class),
+		uint(input.Dow),
+		uint(input.Period),
+		input.Subject,
+		input.Teacher,
+		input.Description,
+		input.ClassRoom,
+	}
+	return "", info.UpdateSchedule(&data)
+}
+
+func (r *mutationResolver) DeleteSchedule(ctx context.Context, target model.ScheduleDelFilter) (string, error) {
+	return "", info.DeleteSchedule(uint(target.Grade), uint(target.Class), uint(target.Dow), uint(target.Period))
+}
+
 func (r *queryResolver) MyProfile(ctx context.Context) (*model.Profile, error) {
 	userData := ctx.Value("user").(*user.User)
 	return user.UserToGqlType(userData), nil
@@ -371,6 +399,47 @@ func (r *queryResolver) Categories(ctx context.Context) ([]*model.Category, erro
 			AnonAble:      d.AnonAble,
 			WriteAbleRole: user.RoleListToGql(d.WriteAbleRole),
 			ReadAbleRole:  user.RoleListToGql(d.ReadAbleRole),
+		})
+	}
+	return result, nil
+}
+
+func (r *queryResolver) Calendar(ctx context.Context, filter model.CalendarFilter) ([]*model.Calendar, error) {
+	data, err := info.FindCalendar(filter.Year, filter.Month)
+	if err != nil {
+		return nil, err
+	}
+	var result []*model.Calendar
+	for _, d := range data {
+		result = append(result, &model.Calendar{
+			ID:          model.ObjectID(d.ID),
+			Year:        d.Year,
+			Month:       d.Month,
+			Day:         d.Day,
+			Title:       d.Title,
+			Description: d.Description,
+			Icon:        d.Icon,
+		})
+	}
+	return result, nil
+}
+
+func (r *queryResolver) Schedule(ctx context.Context, filter model.ScheduleFilter) ([]*model.Schedule, error) {
+	data, err := info.FindSchedule(filter.Grade, filter.Class, filter.Dow)
+	if err != nil {
+		return nil, err
+	}
+	var result []*model.Schedule
+	for _, d := range data {
+		result = append(result, &model.Schedule{
+			Dow:         d.Dow,
+			Period:      d.Period,
+			Grade:       d.Grade,
+			Class:       d.Class,
+			Subject:     d.Subject,
+			Teacher:     d.Teacher,
+			Description: d.Description,
+			ClassRoom:   d.ClassRoom,
 		})
 	}
 	return result, nil

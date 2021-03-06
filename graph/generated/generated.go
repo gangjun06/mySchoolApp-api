@@ -49,6 +49,16 @@ type ComplexityRoot struct {
 		Dummy func(childComplexity int) int
 	}
 
+	Calendar struct {
+		Day         func(childComplexity int) int
+		Description func(childComplexity int) int
+		ID          func(childComplexity int) int
+		Icon        func(childComplexity int) int
+		Month       func(childComplexity int) int
+		Title       func(childComplexity int) int
+		Year        func(childComplexity int) int
+	}
+
 	Category struct {
 		AnonAble      func(childComplexity int) int
 		ID            func(childComplexity int) int
@@ -67,16 +77,20 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
+		AddCalendar          func(childComplexity int, input model.NewCalendar) int
 		AddComment           func(childComplexity int, input model.NewComment) int
 		CheckVerifyPhoneCode func(childComplexity int, number model.Phone, code string) int
 		CreateCategory       func(childComplexity int, input model.NewCategory) int
 		CreatePost           func(childComplexity int, input model.NewPost) int
+		DeleteCalendar       func(childComplexity int, target model.ObjectID) int
 		DeleteComment        func(childComplexity int, postid model.ObjectID, commentid model.ObjectID) int
+		DeleteSchedule       func(childComplexity int, target model.ScheduleDelFilter) int
 		LikePost             func(childComplexity int, input model.LikePostInput) int
 		SetProfile           func(childComplexity int, student *model.StudentProfileInput, teacher *model.TeacherProfileInput, officials *model.OfficialsProfileInput) int
 		SignIn               func(childComplexity int, phone model.Phone, password string) int
 		SignOut              func(childComplexity int) int
 		SignUp               func(childComplexity int, input model.SignUpInput) int
+		UpdateSchedule       func(childComplexity int, input model.UpdateSchedule) int
 		VerifyPhone          func(childComplexity int, number model.Phone) int
 	}
 
@@ -113,11 +127,24 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
+		Calendar   func(childComplexity int, filter model.CalendarFilter) int
 		Categories func(childComplexity int) int
 		MyProfile  func(childComplexity int) int
 		Post       func(childComplexity int, id model.ObjectID, comment *model.CommentFilter) int
 		Posts      func(childComplexity int, categoryID model.ObjectID, offset *int, limit *int) int
+		Schedule   func(childComplexity int, filter model.ScheduleFilter) int
 		SchoolMeal func(childComplexity int, filter *model.SchoolMealFilter) int
+	}
+
+	Schedule struct {
+		Class       func(childComplexity int) int
+		ClassRoom   func(childComplexity int) int
+		Description func(childComplexity int) int
+		Dow         func(childComplexity int) int
+		Grade       func(childComplexity int) int
+		Period      func(childComplexity int) int
+		Subject     func(childComplexity int) int
+		Teacher     func(childComplexity int) int
 	}
 
 	SchoolMeal struct {
@@ -152,6 +179,10 @@ type MutationResolver interface {
 	LikePost(ctx context.Context, input model.LikePostInput) (*string, error)
 	AddComment(ctx context.Context, input model.NewComment) (model.ObjectID, error)
 	DeleteComment(ctx context.Context, postid model.ObjectID, commentid model.ObjectID) (string, error)
+	AddCalendar(ctx context.Context, input model.NewCalendar) (model.ObjectID, error)
+	DeleteCalendar(ctx context.Context, target model.ObjectID) (string, error)
+	UpdateSchedule(ctx context.Context, input model.UpdateSchedule) (string, error)
+	DeleteSchedule(ctx context.Context, target model.ScheduleDelFilter) (string, error)
 }
 type QueryResolver interface {
 	MyProfile(ctx context.Context) (*model.Profile, error)
@@ -159,6 +190,8 @@ type QueryResolver interface {
 	Post(ctx context.Context, id model.ObjectID, comment *model.CommentFilter) (*model.Post, error)
 	Posts(ctx context.Context, categoryID model.ObjectID, offset *int, limit *int) ([]*model.Post, error)
 	Categories(ctx context.Context) ([]*model.Category, error)
+	Calendar(ctx context.Context, filter model.CalendarFilter) ([]*model.Calendar, error)
+	Schedule(ctx context.Context, filter model.ScheduleFilter) ([]*model.Schedule, error)
 }
 
 type executableSchema struct {
@@ -182,6 +215,55 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.AnonProfile.Dummy(childComplexity), true
+
+	case "Calendar.day":
+		if e.complexity.Calendar.Day == nil {
+			break
+		}
+
+		return e.complexity.Calendar.Day(childComplexity), true
+
+	case "Calendar.description":
+		if e.complexity.Calendar.Description == nil {
+			break
+		}
+
+		return e.complexity.Calendar.Description(childComplexity), true
+
+	case "Calendar.id":
+		if e.complexity.Calendar.ID == nil {
+			break
+		}
+
+		return e.complexity.Calendar.ID(childComplexity), true
+
+	case "Calendar.icon":
+		if e.complexity.Calendar.Icon == nil {
+			break
+		}
+
+		return e.complexity.Calendar.Icon(childComplexity), true
+
+	case "Calendar.month":
+		if e.complexity.Calendar.Month == nil {
+			break
+		}
+
+		return e.complexity.Calendar.Month(childComplexity), true
+
+	case "Calendar.title":
+		if e.complexity.Calendar.Title == nil {
+			break
+		}
+
+		return e.complexity.Calendar.Title(childComplexity), true
+
+	case "Calendar.year":
+		if e.complexity.Calendar.Year == nil {
+			break
+		}
+
+		return e.complexity.Calendar.Year(childComplexity), true
 
 	case "Category.anonAble":
 		if e.complexity.Category.AnonAble == nil {
@@ -260,6 +342,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Comment.UpdateAt(childComplexity), true
 
+	case "Mutation.addCalendar":
+		if e.complexity.Mutation.AddCalendar == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_addCalendar_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.AddCalendar(childComplexity, args["input"].(model.NewCalendar)), true
+
 	case "Mutation.addComment":
 		if e.complexity.Mutation.AddComment == nil {
 			break
@@ -308,6 +402,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.CreatePost(childComplexity, args["input"].(model.NewPost)), true
 
+	case "Mutation.deleteCalendar":
+		if e.complexity.Mutation.DeleteCalendar == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteCalendar_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DeleteCalendar(childComplexity, args["target"].(model.ObjectID)), true
+
 	case "Mutation.deleteComment":
 		if e.complexity.Mutation.DeleteComment == nil {
 			break
@@ -319,6 +425,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.DeleteComment(childComplexity, args["postid"].(model.ObjectID), args["commentid"].(model.ObjectID)), true
+
+	case "Mutation.deleteSchedule":
+		if e.complexity.Mutation.DeleteSchedule == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteSchedule_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DeleteSchedule(childComplexity, args["target"].(model.ScheduleDelFilter)), true
 
 	case "Mutation.likePost":
 		if e.complexity.Mutation.LikePost == nil {
@@ -374,6 +492,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.SignUp(childComplexity, args["input"].(model.SignUpInput)), true
+
+	case "Mutation.updateSchedule":
+		if e.complexity.Mutation.UpdateSchedule == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateSchedule_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateSchedule(childComplexity, args["input"].(model.UpdateSchedule)), true
 
 	case "Mutation.verifyPhone":
 		if e.complexity.Mutation.VerifyPhone == nil {
@@ -527,6 +657,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.ProfileWithToken.Token(childComplexity), true
 
+	case "Query.calendar":
+		if e.complexity.Query.Calendar == nil {
+			break
+		}
+
+		args, err := ec.field_Query_calendar_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Calendar(childComplexity, args["filter"].(model.CalendarFilter)), true
+
 	case "Query.categories":
 		if e.complexity.Query.Categories == nil {
 			break
@@ -565,6 +707,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.Posts(childComplexity, args["categoryID"].(model.ObjectID), args["offset"].(*int), args["limit"].(*int)), true
 
+	case "Query.schedule":
+		if e.complexity.Query.Schedule == nil {
+			break
+		}
+
+		args, err := ec.field_Query_schedule_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Schedule(childComplexity, args["filter"].(model.ScheduleFilter)), true
+
 	case "Query.schoolMeal":
 		if e.complexity.Query.SchoolMeal == nil {
 			break
@@ -576,6 +730,62 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.SchoolMeal(childComplexity, args["filter"].(*model.SchoolMealFilter)), true
+
+	case "Schedule.class":
+		if e.complexity.Schedule.Class == nil {
+			break
+		}
+
+		return e.complexity.Schedule.Class(childComplexity), true
+
+	case "Schedule.classRoom":
+		if e.complexity.Schedule.ClassRoom == nil {
+			break
+		}
+
+		return e.complexity.Schedule.ClassRoom(childComplexity), true
+
+	case "Schedule.description":
+		if e.complexity.Schedule.Description == nil {
+			break
+		}
+
+		return e.complexity.Schedule.Description(childComplexity), true
+
+	case "Schedule.dow":
+		if e.complexity.Schedule.Dow == nil {
+			break
+		}
+
+		return e.complexity.Schedule.Dow(childComplexity), true
+
+	case "Schedule.grade":
+		if e.complexity.Schedule.Grade == nil {
+			break
+		}
+
+		return e.complexity.Schedule.Grade(childComplexity), true
+
+	case "Schedule.period":
+		if e.complexity.Schedule.Period == nil {
+			break
+		}
+
+		return e.complexity.Schedule.Period(childComplexity), true
+
+	case "Schedule.subject":
+		if e.complexity.Schedule.Subject == nil {
+			break
+		}
+
+		return e.complexity.Schedule.Subject(childComplexity), true
+
+	case "Schedule.teacher":
+		if e.complexity.Schedule.Teacher == nil {
+			break
+		}
+
+		return e.complexity.Schedule.Teacher(childComplexity), true
 
 	case "SchoolMeal.calorie":
 		if e.complexity.SchoolMeal.Calorie == nil {
@@ -871,12 +1081,75 @@ input LikePostInput {
   status: Boolean!
 }
 
+input NewCalendar {
+  year: Uint!
+  month: Uint!
+  day: Uint!
+  title: String!
+  description: String!
+  icon: String!
+}
+
+input CalendarFilter {
+  year: Uint!
+  month: Uint!
+}
+
+type Calendar {
+  id: ObjectID!
+  year: Uint!
+  month: Uint!
+  day: Uint!
+  title: String!
+  description: String!
+  icon: String!
+}
+
+input UpdateSchedule {
+  dow: Uint!
+  period: Uint!
+  grade: Uint!
+  class: Uint!
+  subject: String!
+  teacher: String!
+  description: String!
+  classRoom: String!
+}
+
+input ScheduleFilter {
+  grade: Uint!
+  class: Uint!
+  dow: Uint!
+}
+
+input ScheduleDelFilter {
+  grade: Uint!
+  class: Uint!
+  dow: Uint!
+  period: Uint!
+}
+
+type Schedule {
+  dow: Uint!
+  period: Uint!
+  grade: Uint!
+  class: Uint!
+  subject: String!
+  teacher: String!
+  description: String!
+  classRoom: String!
+}
+
+
 type Query {
   myProfile: Profile @auth(getInfo: true)
   schoolMeal(filter: SchoolMealFilter): [SchoolMeal!]!
   post(id: ObjectID!, comment: CommentFilter): Post! @auth(getInfo: true)
   posts(categoryID: ObjectID!, offset: Int, limit: Int): [Post!]! @auth(getInfo: true)
   categories: [Category!]! @auth
+
+  calendar(filter: CalendarFilter!): [Calendar!]!
+  schedule(filter: ScheduleFilter!): [Schedule!]!
 }
 
 type Mutation {
@@ -896,6 +1169,12 @@ type Mutation {
   likePost(input: LikePostInput!): Nothing @auth(getInfo: true)
   addComment(input: NewComment!): ObjectID! @auth(getInfo: true)
   deleteComment(postid: ObjectID!, commentid: ObjectID!): Nothing! @auth
+  
+  addCalendar(input: NewCalendar!): ObjectID! @auth(reqPermission: ["calendar"])
+  deleteCalendar(target: ObjectID!): Nothing! @auth(reqPermission: ["calendar"])
+
+  updateSchedule(input: UpdateSchedule!): Nothing! @auth(reqPermission: ["schedule"])
+  deleteSchedule(target: ScheduleDelFilter!): Nothing! @auth(reqPermission: ["schedule"])
 }
 
 scalar Phone
@@ -906,6 +1185,7 @@ scalar Timestamp
 scalar JWT
 scalar Nothing
 scalar Permission
+scalar Uint
 `, BuiltIn: false},
 }
 var parsedSchema = gqlparser.MustLoadSchema(sources...)
@@ -935,6 +1215,21 @@ func (ec *executionContext) dir_auth_args(ctx context.Context, rawArgs map[strin
 		}
 	}
 	args["reqPermission"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_addCalendar_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.NewCalendar
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNNewCalendar2githubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐNewCalendar(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
 	return args, nil
 }
 
@@ -1007,6 +1302,21 @@ func (ec *executionContext) field_Mutation_createPost_args(ctx context.Context, 
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_deleteCalendar_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.ObjectID
+	if tmp, ok := rawArgs["target"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("target"))
+		arg0, err = ec.unmarshalNObjectID2githubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐObjectID(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["target"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_deleteComment_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -1028,6 +1338,21 @@ func (ec *executionContext) field_Mutation_deleteComment_args(ctx context.Contex
 		}
 	}
 	args["commentid"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_deleteSchedule_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.ScheduleDelFilter
+	if tmp, ok := rawArgs["target"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("target"))
+		arg0, err = ec.unmarshalNScheduleDelFilter2githubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐScheduleDelFilter(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["target"] = arg0
 	return args, nil
 }
 
@@ -1118,6 +1443,21 @@ func (ec *executionContext) field_Mutation_signUp_args(ctx context.Context, rawA
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_updateSchedule_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.UpdateSchedule
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNUpdateSchedule2githubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐUpdateSchedule(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_verifyPhone_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -1145,6 +1485,21 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 		}
 	}
 	args["name"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_calendar_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.CalendarFilter
+	if tmp, ok := rawArgs["filter"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("filter"))
+		arg0, err = ec.unmarshalNCalendarFilter2githubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐCalendarFilter(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["filter"] = arg0
 	return args, nil
 }
 
@@ -1202,6 +1557,21 @@ func (ec *executionContext) field_Query_posts_args(ctx context.Context, rawArgs 
 		}
 	}
 	args["limit"] = arg2
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_schedule_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.ScheduleFilter
+	if tmp, ok := rawArgs["filter"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("filter"))
+		arg0, err = ec.unmarshalNScheduleFilter2githubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐScheduleFilter(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["filter"] = arg0
 	return args, nil
 }
 
@@ -1288,6 +1658,251 @@ func (ec *executionContext) _AnonProfile_dummy(ctx context.Context, field graphq
 	res := resTmp.(*string)
 	fc.Result = res
 	return ec.marshalONothing2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Calendar_id(ctx context.Context, field graphql.CollectedField, obj *model.Calendar) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Calendar",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(model.ObjectID)
+	fc.Result = res
+	return ec.marshalNObjectID2githubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐObjectID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Calendar_year(ctx context.Context, field graphql.CollectedField, obj *model.Calendar) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Calendar",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Year, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(uint)
+	fc.Result = res
+	return ec.marshalNUint2uint(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Calendar_month(ctx context.Context, field graphql.CollectedField, obj *model.Calendar) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Calendar",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Month, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(uint)
+	fc.Result = res
+	return ec.marshalNUint2uint(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Calendar_day(ctx context.Context, field graphql.CollectedField, obj *model.Calendar) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Calendar",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Day, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(uint)
+	fc.Result = res
+	return ec.marshalNUint2uint(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Calendar_title(ctx context.Context, field graphql.CollectedField, obj *model.Calendar) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Calendar",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Title, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Calendar_description(ctx context.Context, field graphql.CollectedField, obj *model.Calendar) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Calendar",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Description, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Calendar_icon(ctx context.Context, field graphql.CollectedField, obj *model.Calendar) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Calendar",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Icon, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Category_id(ctx context.Context, field graphql.CollectedField, obj *model.Category) (ret graphql.Marshaler) {
@@ -2231,6 +2846,270 @@ func (ec *executionContext) _Mutation_deleteComment(ctx context.Context, field g
 				return nil, errors.New("directive auth is not implemented")
 			}
 			return ec.directives.Auth(ctx, nil, directive0, nil, nil)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(string); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be string`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNNothing2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_addCalendar(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_addCalendar_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().AddCalendar(rctx, args["input"].(model.NewCalendar))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			reqPermission, err := ec.unmarshalOPermission2ᚕstringᚄ(ctx, []interface{}{"calendar"})
+			if err != nil {
+				return nil, err
+			}
+			if ec.directives.Auth == nil {
+				return nil, errors.New("directive auth is not implemented")
+			}
+			return ec.directives.Auth(ctx, nil, directive0, nil, reqPermission)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(model.ObjectID); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/osang-school/backend/graph/model.ObjectID`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(model.ObjectID)
+	fc.Result = res
+	return ec.marshalNObjectID2githubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐObjectID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_deleteCalendar(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_deleteCalendar_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().DeleteCalendar(rctx, args["target"].(model.ObjectID))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			reqPermission, err := ec.unmarshalOPermission2ᚕstringᚄ(ctx, []interface{}{"calendar"})
+			if err != nil {
+				return nil, err
+			}
+			if ec.directives.Auth == nil {
+				return nil, errors.New("directive auth is not implemented")
+			}
+			return ec.directives.Auth(ctx, nil, directive0, nil, reqPermission)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(string); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be string`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNNothing2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_updateSchedule(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_updateSchedule_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().UpdateSchedule(rctx, args["input"].(model.UpdateSchedule))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			reqPermission, err := ec.unmarshalOPermission2ᚕstringᚄ(ctx, []interface{}{"schedule"})
+			if err != nil {
+				return nil, err
+			}
+			if ec.directives.Auth == nil {
+				return nil, errors.New("directive auth is not implemented")
+			}
+			return ec.directives.Auth(ctx, nil, directive0, nil, reqPermission)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(string); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be string`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNNothing2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_deleteSchedule(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_deleteSchedule_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().DeleteSchedule(rctx, args["target"].(model.ScheduleDelFilter))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			reqPermission, err := ec.unmarshalOPermission2ᚕstringᚄ(ctx, []interface{}{"schedule"})
+			if err != nil {
+				return nil, err
+			}
+			if ec.directives.Auth == nil {
+				return nil, errors.New("directive auth is not implemented")
+			}
+			return ec.directives.Auth(ctx, nil, directive0, nil, reqPermission)
 		}
 
 		tmp, err := directive1(rctx)
@@ -3230,6 +4109,90 @@ func (ec *executionContext) _Query_categories(ctx context.Context, field graphql
 	return ec.marshalNCategory2ᚕᚖgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐCategoryᚄ(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Query_calendar(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_calendar_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Calendar(rctx, args["filter"].(model.CalendarFilter))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Calendar)
+	fc.Result = res
+	return ec.marshalNCalendar2ᚕᚖgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐCalendarᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_schedule(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_schedule_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Schedule(rctx, args["filter"].(model.ScheduleFilter))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Schedule)
+	fc.Result = res
+	return ec.marshalNSchedule2ᚕᚖgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐScheduleᚄ(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -3299,6 +4262,286 @@ func (ec *executionContext) _Query___schema(ctx context.Context, field graphql.C
 	res := resTmp.(*introspection.Schema)
 	fc.Result = res
 	return ec.marshalO__Schema2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐSchema(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Schedule_dow(ctx context.Context, field graphql.CollectedField, obj *model.Schedule) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Schedule",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Dow, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(uint)
+	fc.Result = res
+	return ec.marshalNUint2uint(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Schedule_period(ctx context.Context, field graphql.CollectedField, obj *model.Schedule) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Schedule",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Period, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(uint)
+	fc.Result = res
+	return ec.marshalNUint2uint(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Schedule_grade(ctx context.Context, field graphql.CollectedField, obj *model.Schedule) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Schedule",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Grade, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(uint)
+	fc.Result = res
+	return ec.marshalNUint2uint(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Schedule_class(ctx context.Context, field graphql.CollectedField, obj *model.Schedule) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Schedule",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Class, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(uint)
+	fc.Result = res
+	return ec.marshalNUint2uint(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Schedule_subject(ctx context.Context, field graphql.CollectedField, obj *model.Schedule) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Schedule",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Subject, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Schedule_teacher(ctx context.Context, field graphql.CollectedField, obj *model.Schedule) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Schedule",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Teacher, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Schedule_description(ctx context.Context, field graphql.CollectedField, obj *model.Schedule) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Schedule",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Description, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Schedule_classRoom(ctx context.Context, field graphql.CollectedField, obj *model.Schedule) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Schedule",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ClassRoom, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _SchoolMeal_type(ctx context.Context, field graphql.CollectedField, obj *model.SchoolMeal) (ret graphql.Marshaler) {
@@ -4738,6 +5981,34 @@ func (ec *executionContext) ___Type_ofType(ctx context.Context, field graphql.Co
 
 // region    **************************** input.gotpl *****************************
 
+func (ec *executionContext) unmarshalInputCalendarFilter(ctx context.Context, obj interface{}) (model.CalendarFilter, error) {
+	var it model.CalendarFilter
+	var asMap = obj.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "year":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("year"))
+			it.Year, err = ec.unmarshalNUint2uint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "month":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("month"))
+			it.Month, err = ec.unmarshalNUint2uint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputCommentFilter(ctx context.Context, obj interface{}) (model.CommentFilter, error) {
 	var it model.CommentFilter
 	var asMap = obj.(map[string]interface{})
@@ -4793,6 +6064,66 @@ func (ec *executionContext) unmarshalInputLikePostInput(ctx context.Context, obj
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
 			it.Status, err = ec.unmarshalNBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputNewCalendar(ctx context.Context, obj interface{}) (model.NewCalendar, error) {
+	var it model.NewCalendar
+	var asMap = obj.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "year":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("year"))
+			it.Year, err = ec.unmarshalNUint2uint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "month":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("month"))
+			it.Month, err = ec.unmarshalNUint2uint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "day":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("day"))
+			it.Day, err = ec.unmarshalNUint2uint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "title":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("title"))
+			it.Title, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "description":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			it.Description, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "icon":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("icon"))
+			it.Icon, err = ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -4962,6 +6293,86 @@ func (ec *executionContext) unmarshalInputOfficialsProfileInput(ctx context.Cont
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputScheduleDelFilter(ctx context.Context, obj interface{}) (model.ScheduleDelFilter, error) {
+	var it model.ScheduleDelFilter
+	var asMap = obj.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "grade":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("grade"))
+			it.Grade, err = ec.unmarshalNUint2uint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "class":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("class"))
+			it.Class, err = ec.unmarshalNUint2uint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "dow":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dow"))
+			it.Dow, err = ec.unmarshalNUint2uint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "period":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("period"))
+			it.Period, err = ec.unmarshalNUint2uint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputScheduleFilter(ctx context.Context, obj interface{}) (model.ScheduleFilter, error) {
+	var it model.ScheduleFilter
+	var asMap = obj.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "grade":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("grade"))
+			it.Grade, err = ec.unmarshalNUint2uint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "class":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("class"))
+			it.Class, err = ec.unmarshalNUint2uint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "dow":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dow"))
+			it.Dow, err = ec.unmarshalNUint2uint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputSchoolMealFilter(ctx context.Context, obj interface{}) (model.SchoolMealFilter, error) {
 	var it model.SchoolMealFilter
 	var asMap = obj.(map[string]interface{})
@@ -5106,6 +6517,82 @@ func (ec *executionContext) unmarshalInputTeacherProfileInput(ctx context.Contex
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputUpdateSchedule(ctx context.Context, obj interface{}) (model.UpdateSchedule, error) {
+	var it model.UpdateSchedule
+	var asMap = obj.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "dow":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dow"))
+			it.Dow, err = ec.unmarshalNUint2uint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "period":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("period"))
+			it.Period, err = ec.unmarshalNUint2uint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "grade":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("grade"))
+			it.Grade, err = ec.unmarshalNUint2uint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "class":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("class"))
+			it.Class, err = ec.unmarshalNUint2uint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "subject":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("subject"))
+			it.Subject, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "teacher":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("teacher"))
+			it.Teacher, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "description":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			it.Description, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "classRoom":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("classRoom"))
+			it.ClassRoom, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 // endregion **************************** input.gotpl *****************************
 
 // region    ************************** interface.gotpl ***************************
@@ -5164,6 +6651,63 @@ func (ec *executionContext) _AnonProfile(ctx context.Context, sel ast.SelectionS
 			out.Values[i] = graphql.MarshalString("AnonProfile")
 		case "dummy":
 			out.Values[i] = ec._AnonProfile_dummy(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var calendarImplementors = []string{"Calendar"}
+
+func (ec *executionContext) _Calendar(ctx context.Context, sel ast.SelectionSet, obj *model.Calendar) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, calendarImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Calendar")
+		case "id":
+			out.Values[i] = ec._Calendar_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "year":
+			out.Values[i] = ec._Calendar_year(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "month":
+			out.Values[i] = ec._Calendar_month(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "day":
+			out.Values[i] = ec._Calendar_day(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "title":
+			out.Values[i] = ec._Calendar_title(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "description":
+			out.Values[i] = ec._Calendar_description(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "icon":
+			out.Values[i] = ec._Calendar_icon(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -5335,6 +6879,26 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			}
 		case "deleteComment":
 			out.Values[i] = ec._Mutation_deleteComment(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "addCalendar":
+			out.Values[i] = ec._Mutation_addCalendar(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "deleteCalendar":
+			out.Values[i] = ec._Mutation_deleteCalendar(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "updateSchedule":
+			out.Values[i] = ec._Mutation_updateSchedule(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "deleteSchedule":
+			out.Values[i] = ec._Mutation_deleteSchedule(ctx, field)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -5604,10 +7168,100 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				}
 				return res
 			})
+		case "calendar":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_calendar(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "schedule":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_schedule(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "__type":
 			out.Values[i] = ec._Query___type(ctx, field)
 		case "__schema":
 			out.Values[i] = ec._Query___schema(ctx, field)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var scheduleImplementors = []string{"Schedule"}
+
+func (ec *executionContext) _Schedule(ctx context.Context, sel ast.SelectionSet, obj *model.Schedule) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, scheduleImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Schedule")
+		case "dow":
+			out.Values[i] = ec._Schedule_dow(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "period":
+			out.Values[i] = ec._Schedule_period(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "grade":
+			out.Values[i] = ec._Schedule_grade(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "class":
+			out.Values[i] = ec._Schedule_class(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "subject":
+			out.Values[i] = ec._Schedule_subject(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "teacher":
+			out.Values[i] = ec._Schedule_teacher(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "description":
+			out.Values[i] = ec._Schedule_description(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "classRoom":
+			out.Values[i] = ec._Schedule_classRoom(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -5995,6 +7649,58 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
+func (ec *executionContext) marshalNCalendar2ᚕᚖgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐCalendarᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Calendar) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNCalendar2ᚖgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐCalendar(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+	return ret
+}
+
+func (ec *executionContext) marshalNCalendar2ᚖgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐCalendar(ctx context.Context, sel ast.SelectionSet, v *model.Calendar) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._Calendar(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNCalendarFilter2githubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐCalendarFilter(ctx context.Context, v interface{}) (model.CalendarFilter, error) {
+	res, err := ec.unmarshalInputCalendarFilter(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) marshalNCategory2ᚕᚖgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐCategoryᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Category) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
@@ -6084,6 +7790,11 @@ func (ec *executionContext) marshalNJWT2string(ctx context.Context, sel ast.Sele
 
 func (ec *executionContext) unmarshalNLikePostInput2githubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐLikePostInput(ctx context.Context, v interface{}) (model.LikePostInput, error) {
 	res, err := ec.unmarshalInputLikePostInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNNewCalendar2githubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐNewCalendar(ctx context.Context, v interface{}) (model.NewCalendar, error) {
+	res, err := ec.unmarshalInputNewCalendar(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -6252,6 +7963,63 @@ func (ec *executionContext) marshalNProfileWithToken2ᚖgithubᚗcomᚋosangᚑs
 	return ec._ProfileWithToken(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNSchedule2ᚕᚖgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐScheduleᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Schedule) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNSchedule2ᚖgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐSchedule(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+	return ret
+}
+
+func (ec *executionContext) marshalNSchedule2ᚖgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐSchedule(ctx context.Context, sel ast.SelectionSet, v *model.Schedule) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._Schedule(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNScheduleDelFilter2githubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐScheduleDelFilter(ctx context.Context, v interface{}) (model.ScheduleDelFilter, error) {
+	res, err := ec.unmarshalInputScheduleDelFilter(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNScheduleFilter2githubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐScheduleFilter(ctx context.Context, v interface{}) (model.ScheduleFilter, error) {
+	res, err := ec.unmarshalInputScheduleFilter(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) marshalNSchoolMeal2ᚕᚖgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐSchoolMealᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.SchoolMeal) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
@@ -6382,6 +8150,26 @@ func (ec *executionContext) unmarshalNTimestamp2githubᚗcomᚋosangᚑschoolᚋ
 
 func (ec *executionContext) marshalNTimestamp2githubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐTimestamp(ctx context.Context, sel ast.SelectionSet, v model.Timestamp) graphql.Marshaler {
 	return v
+}
+
+func (ec *executionContext) unmarshalNUint2uint(ctx context.Context, v interface{}) (uint, error) {
+	res, err := model.UnmarshalUint(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNUint2uint(ctx context.Context, sel ast.SelectionSet, v uint) graphql.Marshaler {
+	res := model.MarshalUint(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNUpdateSchedule2githubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐUpdateSchedule(ctx context.Context, v interface{}) (model.UpdateSchedule, error) {
+	res, err := ec.unmarshalInputUpdateSchedule(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalNUserRole2githubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐUserRole(ctx context.Context, v interface{}) (model.UserRole, error) {

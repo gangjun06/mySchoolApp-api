@@ -52,6 +52,8 @@ models:
   Timestamp:
     model:
       - model.Timestamp
+  Uint:
+    model: github.com/osang-school/backend/graph/model.Uint
   ID:
     model:
       - github.com/99designs/gqlgen/graphql.ID

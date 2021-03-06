@@ -18,6 +18,8 @@ var db *mongo.Database
 var User *mongo.Collection
 var Category *mongo.Collection
 var Post *mongo.Collection
+var Calendar *mongo.Collection
+var Schedule *mongo.Collection
 
 func Init() {
 	var err error
@@ -37,27 +39,41 @@ func Init() {
 	}
 
 	db = client.Database("osang")
+
 	User = db.Collection("user")
 	Category = db.Collection("category")
 	Post = db.Collection("post")
+	Calendar = db.Collection("calendar")
+	Schedule = db.Collection("schedule")
 
-	_, err = User.Indexes().CreateOne(
+	CheckErr(User.Indexes().CreateOne(
 		context.Background(),
 		mongo.IndexModel{
 			Keys:    bson.M{"phone": 1},
 			Options: options.Index().SetUnique(true),
 		},
-	)
+	))
 
-	_, err = Category.Indexes().CreateOne(
+	CheckErr(Calendar.Indexes().CreateMany(
+		context.Background(),
+		[]mongo.IndexModel{
+			{Keys: bson.M{"year": 1}},
+			{Keys: bson.M{"month": 1}},
+			{Keys: bson.M{"day": 1}},
+		},
+	))
+
+	CheckErr(Category.Indexes().CreateOne(
 		context.Background(),
 		mongo.IndexModel{
 			Keys:    bson.M{"name": 1},
 			Options: options.Index().SetUnique(true),
 		},
-	)
+	))
+}
 
+func CheckErr(_dummy interface{}, err error) {
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatal(err)
 	}
 }

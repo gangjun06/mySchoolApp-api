@@ -18,6 +18,21 @@ type AnonProfile struct {
 
 func (AnonProfile) IsProfileDetail() {}
 
+type Calendar struct {
+	ID          ObjectID `json:"id"`
+	Year        uint     `json:"year"`
+	Month       uint     `json:"month"`
+	Day         uint     `json:"day"`
+	Title       string   `json:"title"`
+	Description string   `json:"description"`
+	Icon        string   `json:"icon"`
+}
+
+type CalendarFilter struct {
+	Year  uint `json:"year"`
+	Month uint `json:"month"`
+}
+
 type Category struct {
 	ID            ObjectID   `json:"id"`
 	Name          string     `json:"name"`
@@ -44,6 +59,15 @@ type CommentFilter struct {
 type LikePostInput struct {
 	Post   ObjectID `json:"post"`
 	Status bool     `json:"status"`
+}
+
+type NewCalendar struct {
+	Year        uint   `json:"year"`
+	Month       uint   `json:"month"`
+	Day         uint   `json:"day"`
+	Title       string `json:"title"`
+	Description string `json:"description"`
+	Icon        string `json:"icon"`
 }
 
 type NewCategory struct {
@@ -106,6 +130,30 @@ type ProfileWithToken struct {
 	Token   string   `json:"token"`
 }
 
+type Schedule struct {
+	Dow         uint   `json:"dow"`
+	Period      uint   `json:"period"`
+	Grade       uint   `json:"grade"`
+	Class       uint   `json:"class"`
+	Subject     string `json:"subject"`
+	Teacher     string `json:"teacher"`
+	Description string `json:"description"`
+	ClassRoom   string `json:"classRoom"`
+}
+
+type ScheduleDelFilter struct {
+	Grade  uint `json:"grade"`
+	Class  uint `json:"class"`
+	Dow    uint `json:"dow"`
+	Period uint `json:"period"`
+}
+
+type ScheduleFilter struct {
+	Grade uint `json:"grade"`
+	Class uint `json:"class"`
+	Dow   uint `json:"dow"`
+}
+
 type SchoolMeal struct {
 	Type     SchoolMealType `json:"type"`
 	Calorie  string         `json:"calorie"`
@@ -151,6 +199,17 @@ func (TeacherProfile) IsProfileDetail() {}
 
 type TeacherProfileInput struct {
 	Subject []string `json:"subject"`
+}
+
+type UpdateSchedule struct {
+	Dow         uint   `json:"dow"`
+	Period      uint   `json:"period"`
+	Grade       uint   `json:"grade"`
+	Class       uint   `json:"class"`
+	Subject     string `json:"subject"`
+	Teacher     string `json:"teacher"`
+	Description string `json:"description"`
+	ClassRoom   string `json:"classRoom"`
 }
 
 type SchoolMealType string
