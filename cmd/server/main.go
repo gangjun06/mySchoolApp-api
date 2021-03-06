@@ -34,7 +34,11 @@ func main() {
 
 	c := generated.Config{Resolvers: &graph.Resolver{}}
 	c.Directives.Auth = func(ctx context.Context, obj interface{}, next graphql.Resolver, getInfo *bool, reqPermission []string) (interface{}, error) {
-		data, err := session.ParseToken(ctx.Value("authHeader").(string))
+		token := ctx.Value("authHeader")
+		if token == nil {
+			return nil, myerr.New(myerr.ErrAuth, "")
+		}
+		data, err := session.ParseToken(token.(string))
 		if err != nil {
 			return nil, err
 		}

@@ -43,6 +43,7 @@ type (
 	}
 	Comment struct {
 		ID         primitive.ObjectID `bson:"_id,omitempty"`
+		Anon       bool               `bson:"anon,omitempty"`
 		Author     primitive.ObjectID `bson:"author,omitempty"`
 		AuthorData *user.User         `bson:"authorData,omitempty"`
 		Status     PostStatus         `bson:"status,omitempty"`
@@ -70,34 +71,28 @@ func CheckUserPermission(purpose string, category *Category, userRole user.Role,
 			}
 			return false
 		}
-		if ok := func() bool {
+		return func() bool {
 			for _, v := range category.WriteAbleRole {
 				if userRole == v {
 					return true
 				}
 			}
 			return false
-		}(); !ok {
-			return false
-		}
+		}()
 	case "read":
-		if ok := func() bool {
+		return func() bool {
 			for _, v := range category.ReadAbleRole {
 				if userRole == v {
 					return true
 				}
 			}
 			return false
-		}(); !ok {
-			return false
-		}
+		}()
 	case "manage":
-		if len(category.ReqManagePermission) > 0 {
-			if ok := utils.HasPermission(category.ReqPermission, userPermission); ok {
-				return true
-			}
-			return false
+		if ok := utils.HasPermission(category.ReqPermission, userPermission); ok {
+			return true
 		}
+		return false
 	}
 	return false
 }
@@ -120,6 +115,18 @@ func GetCategory(id primitive.ObjectID) (*Category, error) {
 	return &result, nil
 }
 
+func GetAllCategory() ([]*Category, error) {
+	cursor, err := mongodb.Category.Find(nil, bson.M{})
+	if err != nil {
+		return nil, myerr.New(myerr.ErrServer, err.Error())
+	}
+	var data []*Category
+	if err := cursor.All(nil, &data); err != nil {
+		return nil, myerr.New(myerr.ErrServer, err.Error())
+	}
+	return data, nil
+}
+
 func GetCategoryByPost(id primitive.ObjectID) (*Category, error) {
 	pipeline := mongo.Pipeline{
 		bson.D{{"$match", bson.M{"_id": id}}},
@@ -138,7 +145,7 @@ func GetCategoryByPost(id primitive.ObjectID) (*Category, error) {
 		return nil, myerr.New(myerr.ErrServer, err.Error())
 	}
 	if len(data) < 1 {
-		return nil, myerr.New(myerr.ErrNotFound, "post not found")
+		return nil, myerr.New(myerr.ErrNotFound, "category not found")
 	}
 	return &data[0].Category, nil
 }
@@ -168,6 +175,40 @@ func NewPost(categoryID, author primitive.ObjectID, title, content string, anon 
 		return primitive.NilObjectID, myerr.New(myerr.ErrServer, err.Error())
 	}
 	return result.InsertedID.(primitive.ObjectID), nil
+}
+
+func GetPosts(categoryID primitive.ObjectID, offset, limit int) ([]*Post, error) {
+	pipeline := mongo.Pipeline{
+		bson.D{{"$match", bson.M{"category": categoryID}}},
+		bson.D{{"$skip", offset}},
+		bson.D{{"$limit", limit}},
+		bson.D{{"$lookup", bson.D{{"from", "category"}, {"localField", "category"}, {"foreignField", "_id"}, {"as", "categoryData"}}}},
+		bson.D{{"$lookup", bson.D{{"from", "user"}, {"localField", "author"}, {"foreignField", "_id"}, {"as", "authorData"}}}},
+		bson.D{{"$unwind", "$categoryData"}},
+		bson.D{{"$unwind", "$authorData"}},
+	}
+
+	cursor, err := mongodb.Post.Aggregate(nil, pipeline)
+	if err != nil {
+		return nil, myerr.New(myerr.ErrServer, err.Error())
+	}
+
+	var post []*Post
+	if err := cursor.All(nil, &post); err != nil {
+		return nil, myerr.New(myerr.ErrServer, err.Error())
+	}
+	for i, d := range post {
+		if d.Anon {
+			post[i].AuthorData = &user.User{
+				ID:     primitive.NilObjectID,
+				Name:   "익명",
+				Role:   user.RoleAnon,
+				Status: user.StatusUser,
+				Phone:  "01000000000",
+			}
+		}
+	}
+	return post, nil
 }
 
 // GetPost (postid, loadPost, commentOffset, commentLimit)
@@ -225,21 +266,21 @@ func GetPost(id, userID primitive.ObjectID, loadPost bool, comment ...int) (*Pos
 				"likeCnt": bson.M{
 					"$cond": bson.M{
 						"if":   bson.M{"$eq": bson.A{"$likeUsers", nil}},
-						"then": bson.M{"$size": "$likeUsers"},
-						"else": 0,
+						"then": 0,
+						"else": bson.M{"$size": "$likeUsers"},
 					},
 				},
 				"isLike": bson.M{
 					"$cond": bson.M{
 						"if":   bson.M{"$eq": bson.A{"$likeUsers", nil}},
-						"then": bson.M{"$in": bson.A{userID, "$likeUsers"}},
-						"else": false,
+						"then": false,
+						"else": bson.M{"$in": bson.A{userID, "$likeUsers"}},
 					},
 				},
 			}}},
 		}...)
 	}
-	pipeline = append(pipeline, bson.D{{"$project", bson.M{"like": 0}}})
+	pipeline = append(pipeline, bson.D{{"$project", bson.M{"likeUsers": 0}}})
 
 	cursor, err := mongodb.Post.Aggregate(nil, pipeline)
 	if err != nil {
@@ -255,13 +296,26 @@ func GetPost(id, userID primitive.ObjectID, loadPost bool, comment ...int) (*Pos
 	if len(post[0].Comment) == 1 && post[0].Comment[0].Content == "" {
 		post[0].Comment = []*Comment{}
 	}
+	anonUser := &user.User{
+		ID:     primitive.NilObjectID,
+		Name:   "익명",
+		Role:   user.RoleAnon,
+		Status: user.StatusUser,
+		Phone:  "01000000000",
+	}
 	if post[0].Anon {
-		post[0].AuthorData = &user.User{
-			Name:   "익명",
-			Role:   user.RoleAnon,
-			Status: user.StatusUser,
-			Phone:  "01000000000",
+		post[0].AuthorData = anonUser
+	}
+	for i, d := range post[0].Comment {
+		if d.Anon {
+			post[0].Comment[i].AuthorData = anonUser
 		}
+		if d.Status == StatusDeleted {
+			post[0].Comment[i].Content = "이 댓글은 삭제되었습니다"
+		} else if d.Status == StatusReported {
+			post[0].Comment[i].Content = "이 댓글은 신고로 인해 삭제되었습니다"
+		}
+
 	}
 	return &post[0], nil
 }
@@ -283,7 +337,7 @@ func PostLike(postID, user primitive.ObjectID, status bool) error {
 	return nil
 }
 
-func NewComment(postID, author primitive.ObjectID, content string) (primitive.ObjectID, error) {
+func NewComment(postID, author primitive.ObjectID, content string, anon bool) (primitive.ObjectID, error) {
 	filter := bson.M{"_id": postID}
 	objectID := primitive.NewObjectID()
 	update := bson.M{"$push": bson.M{
@@ -293,6 +347,8 @@ func NewComment(postID, author primitive.ObjectID, content string) (primitive.Ob
 			"content":  content,
 			"createAt": time.Now(),
 			"updateAt": time.Now(),
+			"status":   StatusNormal,
+			"anon":     anon,
 		},
 	}}
 	_, err := mongodb.Post.UpdateOne(nil, filter, update)
@@ -300,4 +356,16 @@ func NewComment(postID, author primitive.ObjectID, content string) (primitive.Ob
 		return primitive.NewObjectID(), myerr.New(myerr.ErrServer, err.Error())
 	}
 	return objectID, nil
+}
+
+func DeleteComment(postID, commentID primitive.ObjectID) error {
+	filter := bson.M{"_id": postID, "comment._id": commentID}
+	update := bson.M{"$set": bson.M{
+		"comment.$.status": StatusDeleted,
+	}}
+	_, err := mongodb.Post.UpdateOne(nil, filter, update)
+	if err != nil {
+		return myerr.New(myerr.ErrServer, err.Error())
+	}
+	return nil
 }

@@ -6,9 +6,8 @@ directive @auth(
 union ProfileDetail =
     StudentProfile
   | TeacherProfile
-  | OfficalsProfile
-  | AnonProfile
-
+  | OfficialsProfile
+  | AnonProfile 
 enum UserStatus {
   WAIT
   USER
@@ -18,7 +17,7 @@ enum UserStatus {
 enum UserRole {
   Student
   Teacher
-  Officals
+  Officials
 }
 
 type Profile {
@@ -49,7 +48,7 @@ input TeacherProfileInput {
   subject: [String!]!
 }
 
-type OfficalsProfile {
+type OfficialsProfile {
   role: String!
   description: String!
 }
@@ -58,7 +57,7 @@ type AnonProfile {
   dummy: Nothing
 }
 
-input OfficalsProfileInput {
+input OfficialsProfileInput {
   role: String!
   description: String
 }
@@ -71,14 +70,14 @@ input SignUpInput {
   detail: ProfileCode!
 }
 
-enum CafeteriaType {
+enum SchoolMealType {
   BREAKFAST
   LUNCH
   DINNER
 }
 
-type Cafeteria {
-  type: CafeteriaType!
+type SchoolMeal {
+  type: SchoolMealType!
   calorie: String!
   content: String!
   nutrient: String!
@@ -86,10 +85,10 @@ type Cafeteria {
   date: Timestamp!
 }
 
-input CafeteriaFilter {
+input SchoolMealFilter {
   dateStart: Timestamp
   dateEnd: Timestamp
-  type: CafeteriaType
+  type: SchoolMealType
 }
 
 type ProfileWithToken {
@@ -97,19 +96,14 @@ type ProfileWithToken {
   token: JWT!
 }
 
-type Category {
-  id: ObjectID!
-  name: String!
-}
-
 type Post {
   id: ObjectID!
   category: Category!
-  like: Int!
-  isLike: Boolean!
+  like: Int
+  isLike: Boolean
   author: Profile!
   title: String!
-  content: String!
+  content: String
   createAt: Timestamp!
   updateAt: Timestamp!
   comment: [Comment!]
@@ -131,6 +125,15 @@ input NewCategory {
   writeAbleRole: [UserRole!]!
 }
 
+type Category {
+  id: ObjectID!
+  name: String!
+  reqPermission: [String!]!
+  anonAble: Boolean!
+  readAbleRole: [UserRole!]!
+  writeAbleRole: [UserRole!]!
+}
+
 input NewPost {
   category: ObjectID!
   title: String!
@@ -141,6 +144,7 @@ input NewPost {
 input NewComment {
   post: ObjectID!
   content: String!
+  anon: Boolean
 }
 
 input CommentFilter {
@@ -156,8 +160,10 @@ input LikePostInput {
 
 type Query {
   myProfile: Profile @auth(getInfo: true)
-  cafeteria(filter: CafeteriaFilter): [Cafeteria!]!
+  schoolMeal(filter: SchoolMealFilter): [SchoolMeal!]!
   post(id: ObjectID!, comment: CommentFilter): Post! @auth(getInfo: true)
+  posts(categoryID: ObjectID!, offset: Int, limit: Int): [Post!]! @auth(getInfo: true)
+  categories: [Category!]! @auth
 }
 
 type Mutation {
@@ -168,7 +174,7 @@ type Mutation {
   setProfile(
     student: StudentProfileInput
     teacher: TeacherProfileInput
-    officals: OfficalsProfileInput
+    officials: OfficialsProfileInput
   ): ProfileCode!
   signUp(input: SignUpInput!): ProfileWithToken
   createCategory(input: NewCategory!): ObjectID! @auth(reqPermission: ["admin"])
@@ -176,7 +182,7 @@ type Mutation {
   createPost(input: NewPost!): ObjectID! @auth(getInfo: true)
   likePost(input: LikePostInput!): Nothing @auth(getInfo: true)
   addComment(input: NewComment!): ObjectID! @auth(getInfo: true)
-  deleteComment(id: ObjectID!): ObjectID! @auth
+  deleteComment(postid: ObjectID!, commentid: ObjectID!): Nothing! @auth
 }
 
 scalar Phone

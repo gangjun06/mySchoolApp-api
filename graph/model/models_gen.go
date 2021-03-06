@@ -18,24 +18,13 @@ type AnonProfile struct {
 
 func (AnonProfile) IsProfileDetail() {}
 
-type Cafeteria struct {
-	Type     CafeteriaType `json:"type"`
-	Calorie  string        `json:"calorie"`
-	Content  string        `json:"content"`
-	Nutrient string        `json:"nutrient"`
-	Origin   string        `json:"origin"`
-	Date     Timestamp     `json:"date"`
-}
-
-type CafeteriaFilter struct {
-	DateStart *Timestamp     `json:"dateStart"`
-	DateEnd   *Timestamp     `json:"dateEnd"`
-	Type      *CafeteriaType `json:"type"`
-}
-
 type Category struct {
-	ID   ObjectID `json:"id"`
-	Name string   `json:"name"`
+	ID            ObjectID   `json:"id"`
+	Name          string     `json:"name"`
+	ReqPermission []string   `json:"reqPermission"`
+	AnonAble      bool       `json:"anonAble"`
+	ReadAbleRole  []UserRole `json:"readAbleRole"`
+	WriteAbleRole []UserRole `json:"writeAbleRole"`
 }
 
 type Comment struct {
@@ -68,6 +57,7 @@ type NewCategory struct {
 type NewComment struct {
 	Post    ObjectID `json:"post"`
 	Content string   `json:"content"`
+	Anon    *bool    `json:"anon"`
 }
 
 type NewPost struct {
@@ -77,14 +67,14 @@ type NewPost struct {
 	Anon     *bool    `json:"anon"`
 }
 
-type OfficalsProfile struct {
+type OfficialsProfile struct {
 	Role        string `json:"role"`
 	Description string `json:"description"`
 }
 
-func (OfficalsProfile) IsProfileDetail() {}
+func (OfficialsProfile) IsProfileDetail() {}
 
-type OfficalsProfileInput struct {
+type OfficialsProfileInput struct {
 	Role        string  `json:"role"`
 	Description *string `json:"description"`
 }
@@ -92,11 +82,11 @@ type OfficalsProfileInput struct {
 type Post struct {
 	ID       ObjectID   `json:"id"`
 	Category *Category  `json:"category"`
-	Like     int        `json:"like"`
-	IsLike   bool       `json:"isLike"`
+	Like     *int       `json:"like"`
+	IsLike   *bool      `json:"isLike"`
 	Author   *Profile   `json:"author"`
 	Title    string     `json:"title"`
-	Content  string     `json:"content"`
+	Content  *string    `json:"content"`
 	CreateAt Timestamp  `json:"createAt"`
 	UpdateAt Timestamp  `json:"updateAt"`
 	Comment  []*Comment `json:"comment"`
@@ -114,6 +104,21 @@ type Profile struct {
 type ProfileWithToken struct {
 	Profile *Profile `json:"profile"`
 	Token   string   `json:"token"`
+}
+
+type SchoolMeal struct {
+	Type     SchoolMealType `json:"type"`
+	Calorie  string         `json:"calorie"`
+	Content  string         `json:"content"`
+	Nutrient string         `json:"nutrient"`
+	Origin   string         `json:"origin"`
+	Date     Timestamp      `json:"date"`
+}
+
+type SchoolMealFilter struct {
+	DateStart *Timestamp      `json:"dateStart"`
+	DateEnd   *Timestamp      `json:"dateEnd"`
+	Type      *SchoolMealType `json:"type"`
 }
 
 type SignUpInput struct {
@@ -148,66 +153,66 @@ type TeacherProfileInput struct {
 	Subject []string `json:"subject"`
 }
 
-type CafeteriaType string
+type SchoolMealType string
 
 const (
-	CafeteriaTypeBreakfast CafeteriaType = "BREAKFAST"
-	CafeteriaTypeLunch     CafeteriaType = "LUNCH"
-	CafeteriaTypeDinner    CafeteriaType = "DINNER"
+	SchoolMealTypeBreakfast SchoolMealType = "BREAKFAST"
+	SchoolMealTypeLunch     SchoolMealType = "LUNCH"
+	SchoolMealTypeDinner    SchoolMealType = "DINNER"
 )
 
-var AllCafeteriaType = []CafeteriaType{
-	CafeteriaTypeBreakfast,
-	CafeteriaTypeLunch,
-	CafeteriaTypeDinner,
+var AllSchoolMealType = []SchoolMealType{
+	SchoolMealTypeBreakfast,
+	SchoolMealTypeLunch,
+	SchoolMealTypeDinner,
 }
 
-func (e CafeteriaType) IsValid() bool {
+func (e SchoolMealType) IsValid() bool {
 	switch e {
-	case CafeteriaTypeBreakfast, CafeteriaTypeLunch, CafeteriaTypeDinner:
+	case SchoolMealTypeBreakfast, SchoolMealTypeLunch, SchoolMealTypeDinner:
 		return true
 	}
 	return false
 }
 
-func (e CafeteriaType) String() string {
+func (e SchoolMealType) String() string {
 	return string(e)
 }
 
-func (e *CafeteriaType) UnmarshalGQL(v interface{}) error {
+func (e *SchoolMealType) UnmarshalGQL(v interface{}) error {
 	str, ok := v.(string)
 	if !ok {
 		return fmt.Errorf("enums must be strings")
 	}
 
-	*e = CafeteriaType(str)
+	*e = SchoolMealType(str)
 	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid CafeteriaType", str)
+		return fmt.Errorf("%s is not a valid SchoolMealType", str)
 	}
 	return nil
 }
 
-func (e CafeteriaType) MarshalGQL(w io.Writer) {
+func (e SchoolMealType) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 type UserRole string
 
 const (
-	UserRoleStudent  UserRole = "Student"
-	UserRoleTeacher  UserRole = "Teacher"
-	UserRoleOfficals UserRole = "Officals"
+	UserRoleStudent   UserRole = "Student"
+	UserRoleTeacher   UserRole = "Teacher"
+	UserRoleOfficials UserRole = "Officials"
 )
 
 var AllUserRole = []UserRole{
 	UserRoleStudent,
 	UserRoleTeacher,
-	UserRoleOfficals,
+	UserRoleOfficials,
 }
 
 func (e UserRole) IsValid() bool {
 	switch e {
-	case UserRoleStudent, UserRoleTeacher, UserRoleOfficals:
+	case UserRoleStudent, UserRoleTeacher, UserRoleOfficials:
 		return true
 	}
 	return false

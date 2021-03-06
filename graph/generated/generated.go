@@ -49,18 +49,13 @@ type ComplexityRoot struct {
 		Dummy func(childComplexity int) int
 	}
 
-	Cafeteria struct {
-		Calorie  func(childComplexity int) int
-		Content  func(childComplexity int) int
-		Date     func(childComplexity int) int
-		Nutrient func(childComplexity int) int
-		Origin   func(childComplexity int) int
-		Type     func(childComplexity int) int
-	}
-
 	Category struct {
-		ID   func(childComplexity int) int
-		Name func(childComplexity int) int
+		AnonAble      func(childComplexity int) int
+		ID            func(childComplexity int) int
+		Name          func(childComplexity int) int
+		ReadAbleRole  func(childComplexity int) int
+		ReqPermission func(childComplexity int) int
+		WriteAbleRole func(childComplexity int) int
 	}
 
 	Comment struct {
@@ -76,16 +71,16 @@ type ComplexityRoot struct {
 		CheckVerifyPhoneCode func(childComplexity int, number model.Phone, code string) int
 		CreateCategory       func(childComplexity int, input model.NewCategory) int
 		CreatePost           func(childComplexity int, input model.NewPost) int
-		DeleteComment        func(childComplexity int, id model.ObjectID) int
+		DeleteComment        func(childComplexity int, postid model.ObjectID, commentid model.ObjectID) int
 		LikePost             func(childComplexity int, input model.LikePostInput) int
-		SetProfile           func(childComplexity int, student *model.StudentProfileInput, teacher *model.TeacherProfileInput, officals *model.OfficalsProfileInput) int
+		SetProfile           func(childComplexity int, student *model.StudentProfileInput, teacher *model.TeacherProfileInput, officials *model.OfficialsProfileInput) int
 		SignIn               func(childComplexity int, phone model.Phone, password string) int
 		SignOut              func(childComplexity int) int
 		SignUp               func(childComplexity int, input model.SignUpInput) int
 		VerifyPhone          func(childComplexity int, number model.Phone) int
 	}
 
-	OfficalsProfile struct {
+	OfficialsProfile struct {
 		Description func(childComplexity int) int
 		Role        func(childComplexity int) int
 	}
@@ -118,9 +113,20 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		Cafeteria func(childComplexity int, filter *model.CafeteriaFilter) int
-		MyProfile func(childComplexity int) int
-		Post      func(childComplexity int, id model.ObjectID, comment *model.CommentFilter) int
+		Categories func(childComplexity int) int
+		MyProfile  func(childComplexity int) int
+		Post       func(childComplexity int, id model.ObjectID, comment *model.CommentFilter) int
+		Posts      func(childComplexity int, categoryID model.ObjectID, offset *int, limit *int) int
+		SchoolMeal func(childComplexity int, filter *model.SchoolMealFilter) int
+	}
+
+	SchoolMeal struct {
+		Calorie  func(childComplexity int) int
+		Content  func(childComplexity int) int
+		Date     func(childComplexity int) int
+		Nutrient func(childComplexity int) int
+		Origin   func(childComplexity int) int
+		Type     func(childComplexity int) int
 	}
 
 	StudentProfile struct {
@@ -139,18 +145,20 @@ type MutationResolver interface {
 	SignOut(ctx context.Context) (string, error)
 	VerifyPhone(ctx context.Context, number model.Phone) (string, error)
 	CheckVerifyPhoneCode(ctx context.Context, number model.Phone, code string) (string, error)
-	SetProfile(ctx context.Context, student *model.StudentProfileInput, teacher *model.TeacherProfileInput, officals *model.OfficalsProfileInput) (string, error)
+	SetProfile(ctx context.Context, student *model.StudentProfileInput, teacher *model.TeacherProfileInput, officials *model.OfficialsProfileInput) (string, error)
 	SignUp(ctx context.Context, input model.SignUpInput) (*model.ProfileWithToken, error)
 	CreateCategory(ctx context.Context, input model.NewCategory) (model.ObjectID, error)
 	CreatePost(ctx context.Context, input model.NewPost) (model.ObjectID, error)
 	LikePost(ctx context.Context, input model.LikePostInput) (*string, error)
 	AddComment(ctx context.Context, input model.NewComment) (model.ObjectID, error)
-	DeleteComment(ctx context.Context, id model.ObjectID) (model.ObjectID, error)
+	DeleteComment(ctx context.Context, postid model.ObjectID, commentid model.ObjectID) (string, error)
 }
 type QueryResolver interface {
 	MyProfile(ctx context.Context) (*model.Profile, error)
-	Cafeteria(ctx context.Context, filter *model.CafeteriaFilter) ([]*model.Cafeteria, error)
+	SchoolMeal(ctx context.Context, filter *model.SchoolMealFilter) ([]*model.SchoolMeal, error)
 	Post(ctx context.Context, id model.ObjectID, comment *model.CommentFilter) (*model.Post, error)
+	Posts(ctx context.Context, categoryID model.ObjectID, offset *int, limit *int) ([]*model.Post, error)
+	Categories(ctx context.Context) ([]*model.Category, error)
 }
 
 type executableSchema struct {
@@ -175,47 +183,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.AnonProfile.Dummy(childComplexity), true
 
-	case "Cafeteria.calorie":
-		if e.complexity.Cafeteria.Calorie == nil {
+	case "Category.anonAble":
+		if e.complexity.Category.AnonAble == nil {
 			break
 		}
 
-		return e.complexity.Cafeteria.Calorie(childComplexity), true
-
-	case "Cafeteria.content":
-		if e.complexity.Cafeteria.Content == nil {
-			break
-		}
-
-		return e.complexity.Cafeteria.Content(childComplexity), true
-
-	case "Cafeteria.date":
-		if e.complexity.Cafeteria.Date == nil {
-			break
-		}
-
-		return e.complexity.Cafeteria.Date(childComplexity), true
-
-	case "Cafeteria.nutrient":
-		if e.complexity.Cafeteria.Nutrient == nil {
-			break
-		}
-
-		return e.complexity.Cafeteria.Nutrient(childComplexity), true
-
-	case "Cafeteria.origin":
-		if e.complexity.Cafeteria.Origin == nil {
-			break
-		}
-
-		return e.complexity.Cafeteria.Origin(childComplexity), true
-
-	case "Cafeteria.type":
-		if e.complexity.Cafeteria.Type == nil {
-			break
-		}
-
-		return e.complexity.Cafeteria.Type(childComplexity), true
+		return e.complexity.Category.AnonAble(childComplexity), true
 
 	case "Category.id":
 		if e.complexity.Category.ID == nil {
@@ -230,6 +203,27 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Category.Name(childComplexity), true
+
+	case "Category.readAbleRole":
+		if e.complexity.Category.ReadAbleRole == nil {
+			break
+		}
+
+		return e.complexity.Category.ReadAbleRole(childComplexity), true
+
+	case "Category.reqPermission":
+		if e.complexity.Category.ReqPermission == nil {
+			break
+		}
+
+		return e.complexity.Category.ReqPermission(childComplexity), true
+
+	case "Category.writeAbleRole":
+		if e.complexity.Category.WriteAbleRole == nil {
+			break
+		}
+
+		return e.complexity.Category.WriteAbleRole(childComplexity), true
 
 	case "Comment.author":
 		if e.complexity.Comment.Author == nil {
@@ -324,7 +318,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.DeleteComment(childComplexity, args["id"].(model.ObjectID)), true
+		return e.complexity.Mutation.DeleteComment(childComplexity, args["postid"].(model.ObjectID), args["commentid"].(model.ObjectID)), true
 
 	case "Mutation.likePost":
 		if e.complexity.Mutation.LikePost == nil {
@@ -348,7 +342,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.SetProfile(childComplexity, args["student"].(*model.StudentProfileInput), args["teacher"].(*model.TeacherProfileInput), args["officals"].(*model.OfficalsProfileInput)), true
+		return e.complexity.Mutation.SetProfile(childComplexity, args["student"].(*model.StudentProfileInput), args["teacher"].(*model.TeacherProfileInput), args["officials"].(*model.OfficialsProfileInput)), true
 
 	case "Mutation.signIn":
 		if e.complexity.Mutation.SignIn == nil {
@@ -393,19 +387,19 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.VerifyPhone(childComplexity, args["number"].(model.Phone)), true
 
-	case "OfficalsProfile.description":
-		if e.complexity.OfficalsProfile.Description == nil {
+	case "OfficialsProfile.description":
+		if e.complexity.OfficialsProfile.Description == nil {
 			break
 		}
 
-		return e.complexity.OfficalsProfile.Description(childComplexity), true
+		return e.complexity.OfficialsProfile.Description(childComplexity), true
 
-	case "OfficalsProfile.role":
-		if e.complexity.OfficalsProfile.Role == nil {
+	case "OfficialsProfile.role":
+		if e.complexity.OfficialsProfile.Role == nil {
 			break
 		}
 
-		return e.complexity.OfficalsProfile.Role(childComplexity), true
+		return e.complexity.OfficialsProfile.Role(childComplexity), true
 
 	case "Post.author":
 		if e.complexity.Post.Author == nil {
@@ -533,17 +527,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.ProfileWithToken.Token(childComplexity), true
 
-	case "Query.cafeteria":
-		if e.complexity.Query.Cafeteria == nil {
+	case "Query.categories":
+		if e.complexity.Query.Categories == nil {
 			break
 		}
 
-		args, err := ec.field_Query_cafeteria_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Query.Cafeteria(childComplexity, args["filter"].(*model.CafeteriaFilter)), true
+		return e.complexity.Query.Categories(childComplexity), true
 
 	case "Query.myProfile":
 		if e.complexity.Query.MyProfile == nil {
@@ -563,6 +552,72 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.Post(childComplexity, args["id"].(model.ObjectID), args["comment"].(*model.CommentFilter)), true
+
+	case "Query.posts":
+		if e.complexity.Query.Posts == nil {
+			break
+		}
+
+		args, err := ec.field_Query_posts_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Posts(childComplexity, args["categoryID"].(model.ObjectID), args["offset"].(*int), args["limit"].(*int)), true
+
+	case "Query.schoolMeal":
+		if e.complexity.Query.SchoolMeal == nil {
+			break
+		}
+
+		args, err := ec.field_Query_schoolMeal_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.SchoolMeal(childComplexity, args["filter"].(*model.SchoolMealFilter)), true
+
+	case "SchoolMeal.calorie":
+		if e.complexity.SchoolMeal.Calorie == nil {
+			break
+		}
+
+		return e.complexity.SchoolMeal.Calorie(childComplexity), true
+
+	case "SchoolMeal.content":
+		if e.complexity.SchoolMeal.Content == nil {
+			break
+		}
+
+		return e.complexity.SchoolMeal.Content(childComplexity), true
+
+	case "SchoolMeal.date":
+		if e.complexity.SchoolMeal.Date == nil {
+			break
+		}
+
+		return e.complexity.SchoolMeal.Date(childComplexity), true
+
+	case "SchoolMeal.nutrient":
+		if e.complexity.SchoolMeal.Nutrient == nil {
+			break
+		}
+
+		return e.complexity.SchoolMeal.Nutrient(childComplexity), true
+
+	case "SchoolMeal.origin":
+		if e.complexity.SchoolMeal.Origin == nil {
+			break
+		}
+
+		return e.complexity.SchoolMeal.Origin(childComplexity), true
+
+	case "SchoolMeal.type":
+		if e.complexity.SchoolMeal.Type == nil {
+			break
+		}
+
+		return e.complexity.SchoolMeal.Type(childComplexity), true
 
 	case "StudentProfile.class":
 		if e.complexity.StudentProfile.Class == nil {
@@ -664,9 +719,8 @@ var sources = []*ast.Source{
 union ProfileDetail =
     StudentProfile
   | TeacherProfile
-  | OfficalsProfile
-  | AnonProfile
-
+  | OfficialsProfile
+  | AnonProfile 
 enum UserStatus {
   WAIT
   USER
@@ -676,7 +730,7 @@ enum UserStatus {
 enum UserRole {
   Student
   Teacher
-  Officals
+  Officials
 }
 
 type Profile {
@@ -707,7 +761,7 @@ input TeacherProfileInput {
   subject: [String!]!
 }
 
-type OfficalsProfile {
+type OfficialsProfile {
   role: String!
   description: String!
 }
@@ -716,7 +770,7 @@ type AnonProfile {
   dummy: Nothing
 }
 
-input OfficalsProfileInput {
+input OfficialsProfileInput {
   role: String!
   description: String
 }
@@ -729,14 +783,14 @@ input SignUpInput {
   detail: ProfileCode!
 }
 
-enum CafeteriaType {
+enum SchoolMealType {
   BREAKFAST
   LUNCH
   DINNER
 }
 
-type Cafeteria {
-  type: CafeteriaType!
+type SchoolMeal {
+  type: SchoolMealType!
   calorie: String!
   content: String!
   nutrient: String!
@@ -744,10 +798,10 @@ type Cafeteria {
   date: Timestamp!
 }
 
-input CafeteriaFilter {
+input SchoolMealFilter {
   dateStart: Timestamp
   dateEnd: Timestamp
-  type: CafeteriaType
+  type: SchoolMealType
 }
 
 type ProfileWithToken {
@@ -755,19 +809,14 @@ type ProfileWithToken {
   token: JWT!
 }
 
-type Category {
-  id: ObjectID!
-  name: String!
-}
-
 type Post {
   id: ObjectID!
   category: Category!
-  like: Int!
-  isLike: Boolean!
+  like: Int
+  isLike: Boolean
   author: Profile!
   title: String!
-  content: String!
+  content: String
   createAt: Timestamp!
   updateAt: Timestamp!
   comment: [Comment!]
@@ -789,6 +838,15 @@ input NewCategory {
   writeAbleRole: [UserRole!]!
 }
 
+type Category {
+  id: ObjectID!
+  name: String!
+  reqPermission: [String!]!
+  anonAble: Boolean!
+  readAbleRole: [UserRole!]!
+  writeAbleRole: [UserRole!]!
+}
+
 input NewPost {
   category: ObjectID!
   title: String!
@@ -799,6 +857,7 @@ input NewPost {
 input NewComment {
   post: ObjectID!
   content: String!
+  anon: Boolean
 }
 
 input CommentFilter {
@@ -814,8 +873,10 @@ input LikePostInput {
 
 type Query {
   myProfile: Profile @auth(getInfo: true)
-  cafeteria(filter: CafeteriaFilter): [Cafeteria!]!
+  schoolMeal(filter: SchoolMealFilter): [SchoolMeal!]!
   post(id: ObjectID!, comment: CommentFilter): Post! @auth(getInfo: true)
+  posts(categoryID: ObjectID!, offset: Int, limit: Int): [Post!]! @auth(getInfo: true)
+  categories: [Category!]! @auth
 }
 
 type Mutation {
@@ -826,7 +887,7 @@ type Mutation {
   setProfile(
     student: StudentProfileInput
     teacher: TeacherProfileInput
-    officals: OfficalsProfileInput
+    officials: OfficialsProfileInput
   ): ProfileCode!
   signUp(input: SignUpInput!): ProfileWithToken
   createCategory(input: NewCategory!): ObjectID! @auth(reqPermission: ["admin"])
@@ -834,7 +895,7 @@ type Mutation {
   createPost(input: NewPost!): ObjectID! @auth(getInfo: true)
   likePost(input: LikePostInput!): Nothing @auth(getInfo: true)
   addComment(input: NewComment!): ObjectID! @auth(getInfo: true)
-  deleteComment(id: ObjectID!): ObjectID! @auth
+  deleteComment(postid: ObjectID!, commentid: ObjectID!): Nothing! @auth
 }
 
 scalar Phone
@@ -950,14 +1011,23 @@ func (ec *executionContext) field_Mutation_deleteComment_args(ctx context.Contex
 	var err error
 	args := map[string]interface{}{}
 	var arg0 model.ObjectID
-	if tmp, ok := rawArgs["id"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+	if tmp, ok := rawArgs["postid"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("postid"))
 		arg0, err = ec.unmarshalNObjectID2githubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐObjectID(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["id"] = arg0
+	args["postid"] = arg0
+	var arg1 model.ObjectID
+	if tmp, ok := rawArgs["commentid"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("commentid"))
+		arg1, err = ec.unmarshalNObjectID2githubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐObjectID(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["commentid"] = arg1
 	return args, nil
 }
 
@@ -997,15 +1067,15 @@ func (ec *executionContext) field_Mutation_setProfile_args(ctx context.Context, 
 		}
 	}
 	args["teacher"] = arg1
-	var arg2 *model.OfficalsProfileInput
-	if tmp, ok := rawArgs["officals"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("officals"))
-		arg2, err = ec.unmarshalOOfficalsProfileInput2ᚖgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐOfficalsProfileInput(ctx, tmp)
+	var arg2 *model.OfficialsProfileInput
+	if tmp, ok := rawArgs["officials"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("officials"))
+		arg2, err = ec.unmarshalOOfficialsProfileInput2ᚖgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐOfficialsProfileInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["officals"] = arg2
+	args["officials"] = arg2
 	return args, nil
 }
 
@@ -1078,21 +1148,6 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 	return args, nil
 }
 
-func (ec *executionContext) field_Query_cafeteria_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 *model.CafeteriaFilter
-	if tmp, ok := rawArgs["filter"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("filter"))
-		arg0, err = ec.unmarshalOCafeteriaFilter2ᚖgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐCafeteriaFilter(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["filter"] = arg0
-	return args, nil
-}
-
 func (ec *executionContext) field_Query_post_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -1114,6 +1169,54 @@ func (ec *executionContext) field_Query_post_args(ctx context.Context, rawArgs m
 		}
 	}
 	args["comment"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_posts_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.ObjectID
+	if tmp, ok := rawArgs["categoryID"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("categoryID"))
+		arg0, err = ec.unmarshalNObjectID2githubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐObjectID(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["categoryID"] = arg0
+	var arg1 *int
+	if tmp, ok := rawArgs["offset"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("offset"))
+		arg1, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["offset"] = arg1
+	var arg2 *int
+	if tmp, ok := rawArgs["limit"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("limit"))
+		arg2, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["limit"] = arg2
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_schoolMeal_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *model.SchoolMealFilter
+	if tmp, ok := rawArgs["filter"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("filter"))
+		arg0, err = ec.unmarshalOSchoolMealFilter2ᚖgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐSchoolMealFilter(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["filter"] = arg0
 	return args, nil
 }
 
@@ -1187,216 +1290,6 @@ func (ec *executionContext) _AnonProfile_dummy(ctx context.Context, field graphq
 	return ec.marshalONothing2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Cafeteria_type(ctx context.Context, field graphql.CollectedField, obj *model.Cafeteria) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Cafeteria",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Type, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(model.CafeteriaType)
-	fc.Result = res
-	return ec.marshalNCafeteriaType2githubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐCafeteriaType(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Cafeteria_calorie(ctx context.Context, field graphql.CollectedField, obj *model.Cafeteria) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Cafeteria",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Calorie, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Cafeteria_content(ctx context.Context, field graphql.CollectedField, obj *model.Cafeteria) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Cafeteria",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Content, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Cafeteria_nutrient(ctx context.Context, field graphql.CollectedField, obj *model.Cafeteria) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Cafeteria",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Nutrient, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Cafeteria_origin(ctx context.Context, field graphql.CollectedField, obj *model.Cafeteria) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Cafeteria",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Origin, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Cafeteria_date(ctx context.Context, field graphql.CollectedField, obj *model.Cafeteria) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Cafeteria",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Date, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(model.Timestamp)
-	fc.Result = res
-	return ec.marshalNTimestamp2githubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐTimestamp(ctx, field.Selections, res)
-}
-
 func (ec *executionContext) _Category_id(ctx context.Context, field graphql.CollectedField, obj *model.Category) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -1465,6 +1358,146 @@ func (ec *executionContext) _Category_name(ctx context.Context, field graphql.Co
 	res := resTmp.(string)
 	fc.Result = res
 	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Category_reqPermission(ctx context.Context, field graphql.CollectedField, obj *model.Category) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Category",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ReqPermission, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]string)
+	fc.Result = res
+	return ec.marshalNString2ᚕstringᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Category_anonAble(ctx context.Context, field graphql.CollectedField, obj *model.Category) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Category",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AnonAble, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Category_readAbleRole(ctx context.Context, field graphql.CollectedField, obj *model.Category) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Category",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ReadAbleRole, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]model.UserRole)
+	fc.Result = res
+	return ec.marshalNUserRole2ᚕgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐUserRoleᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Category_writeAbleRole(ctx context.Context, field graphql.CollectedField, obj *model.Category) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Category",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.WriteAbleRole, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]model.UserRole)
+	fc.Result = res
+	return ec.marshalNUserRole2ᚕgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐUserRoleᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Comment_id(ctx context.Context, field graphql.CollectedField, obj *model.Comment) (ret graphql.Marshaler) {
@@ -1848,7 +1881,7 @@ func (ec *executionContext) _Mutation_setProfile(ctx context.Context, field grap
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().SetProfile(rctx, args["student"].(*model.StudentProfileInput), args["teacher"].(*model.TeacherProfileInput), args["officals"].(*model.OfficalsProfileInput))
+		return ec.resolvers.Mutation().SetProfile(rctx, args["student"].(*model.StudentProfileInput), args["teacher"].(*model.TeacherProfileInput), args["officials"].(*model.OfficialsProfileInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2191,7 +2224,7 @@ func (ec *executionContext) _Mutation_deleteComment(ctx context.Context, field g
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().DeleteComment(rctx, args["id"].(model.ObjectID))
+			return ec.resolvers.Mutation().DeleteComment(rctx, args["postid"].(model.ObjectID), args["commentid"].(model.ObjectID))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.Auth == nil {
@@ -2207,10 +2240,10 @@ func (ec *executionContext) _Mutation_deleteComment(ctx context.Context, field g
 		if tmp == nil {
 			return nil, nil
 		}
-		if data, ok := tmp.(model.ObjectID); ok {
+		if data, ok := tmp.(string); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/osang-school/backend/graph/model.ObjectID`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be string`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2222,12 +2255,12 @@ func (ec *executionContext) _Mutation_deleteComment(ctx context.Context, field g
 		}
 		return graphql.Null
 	}
-	res := resTmp.(model.ObjectID)
+	res := resTmp.(string)
 	fc.Result = res
-	return ec.marshalNObjectID2githubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐObjectID(ctx, field.Selections, res)
+	return ec.marshalNNothing2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _OfficalsProfile_role(ctx context.Context, field graphql.CollectedField, obj *model.OfficalsProfile) (ret graphql.Marshaler) {
+func (ec *executionContext) _OfficialsProfile_role(ctx context.Context, field graphql.CollectedField, obj *model.OfficialsProfile) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -2235,7 +2268,7 @@ func (ec *executionContext) _OfficalsProfile_role(ctx context.Context, field gra
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:     "OfficalsProfile",
+		Object:     "OfficialsProfile",
 		Field:      field,
 		Args:       nil,
 		IsMethod:   false,
@@ -2262,7 +2295,7 @@ func (ec *executionContext) _OfficalsProfile_role(ctx context.Context, field gra
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _OfficalsProfile_description(ctx context.Context, field graphql.CollectedField, obj *model.OfficalsProfile) (ret graphql.Marshaler) {
+func (ec *executionContext) _OfficialsProfile_description(ctx context.Context, field graphql.CollectedField, obj *model.OfficialsProfile) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -2270,7 +2303,7 @@ func (ec *executionContext) _OfficalsProfile_description(ctx context.Context, fi
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:     "OfficalsProfile",
+		Object:     "OfficialsProfile",
 		Field:      field,
 		Args:       nil,
 		IsMethod:   false,
@@ -2392,14 +2425,11 @@ func (ec *executionContext) _Post_like(ctx context.Context, field graphql.Collec
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
-	res := resTmp.(int)
+	res := resTmp.(*int)
 	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
+	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Post_isLike(ctx context.Context, field graphql.CollectedField, obj *model.Post) (ret graphql.Marshaler) {
@@ -2427,14 +2457,11 @@ func (ec *executionContext) _Post_isLike(ctx context.Context, field graphql.Coll
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
-	res := resTmp.(bool)
+	res := resTmp.(*bool)
 	fc.Result = res
-	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Post_author(ctx context.Context, field graphql.CollectedField, obj *model.Post) (ret graphql.Marshaler) {
@@ -2532,14 +2559,11 @@ func (ec *executionContext) _Post_content(ctx context.Context, field graphql.Col
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(*string)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Post_createAt(ctx context.Context, field graphql.CollectedField, obj *model.Post) (ret graphql.Marshaler) {
@@ -2977,7 +3001,7 @@ func (ec *executionContext) _Query_myProfile(ctx context.Context, field graphql.
 	return ec.marshalOProfile2ᚖgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐProfile(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Query_cafeteria(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Query_schoolMeal(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -2994,7 +3018,7 @@ func (ec *executionContext) _Query_cafeteria(ctx context.Context, field graphql.
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Query_cafeteria_args(ctx, rawArgs)
+	args, err := ec.field_Query_schoolMeal_args(ctx, rawArgs)
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
@@ -3002,7 +3026,7 @@ func (ec *executionContext) _Query_cafeteria(ctx context.Context, field graphql.
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Cafeteria(rctx, args["filter"].(*model.CafeteriaFilter))
+		return ec.resolvers.Query().SchoolMeal(rctx, args["filter"].(*model.SchoolMealFilter))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3014,9 +3038,9 @@ func (ec *executionContext) _Query_cafeteria(ctx context.Context, field graphql.
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.Cafeteria)
+	res := resTmp.([]*model.SchoolMeal)
 	fc.Result = res
-	return ec.marshalNCafeteria2ᚕᚖgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐCafeteriaᚄ(ctx, field.Selections, res)
+	return ec.marshalNSchoolMeal2ᚕᚖgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐSchoolMealᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_post(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -3083,6 +3107,127 @@ func (ec *executionContext) _Query_post(ctx context.Context, field graphql.Colle
 	res := resTmp.(*model.Post)
 	fc.Result = res
 	return ec.marshalNPost2ᚖgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐPost(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_posts(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_posts_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Query().Posts(rctx, args["categoryID"].(model.ObjectID), args["offset"].(*int), args["limit"].(*int))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			getInfo, err := ec.unmarshalOBoolean2ᚖbool(ctx, true)
+			if err != nil {
+				return nil, err
+			}
+			if ec.directives.Auth == nil {
+				return nil, errors.New("directive auth is not implemented")
+			}
+			return ec.directives.Auth(ctx, nil, directive0, getInfo, nil)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.([]*model.Post); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*github.com/osang-school/backend/graph/model.Post`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Post)
+	fc.Result = res
+	return ec.marshalNPost2ᚕᚖgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐPostᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_categories(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Query().Categories(rctx)
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.Auth == nil {
+				return nil, errors.New("directive auth is not implemented")
+			}
+			return ec.directives.Auth(ctx, nil, directive0, nil, nil)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.([]*model.Category); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*github.com/osang-school/backend/graph/model.Category`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Category)
+	fc.Result = res
+	return ec.marshalNCategory2ᚕᚖgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐCategoryᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -3154,6 +3299,216 @@ func (ec *executionContext) _Query___schema(ctx context.Context, field graphql.C
 	res := resTmp.(*introspection.Schema)
 	fc.Result = res
 	return ec.marshalO__Schema2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐSchema(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _SchoolMeal_type(ctx context.Context, field graphql.CollectedField, obj *model.SchoolMeal) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "SchoolMeal",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Type, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(model.SchoolMealType)
+	fc.Result = res
+	return ec.marshalNSchoolMealType2githubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐSchoolMealType(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _SchoolMeal_calorie(ctx context.Context, field graphql.CollectedField, obj *model.SchoolMeal) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "SchoolMeal",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Calorie, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _SchoolMeal_content(ctx context.Context, field graphql.CollectedField, obj *model.SchoolMeal) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "SchoolMeal",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Content, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _SchoolMeal_nutrient(ctx context.Context, field graphql.CollectedField, obj *model.SchoolMeal) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "SchoolMeal",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Nutrient, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _SchoolMeal_origin(ctx context.Context, field graphql.CollectedField, obj *model.SchoolMeal) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "SchoolMeal",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Origin, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _SchoolMeal_date(ctx context.Context, field graphql.CollectedField, obj *model.SchoolMeal) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "SchoolMeal",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Date, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(model.Timestamp)
+	fc.Result = res
+	return ec.marshalNTimestamp2githubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐTimestamp(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _StudentProfile_grade(ctx context.Context, field graphql.CollectedField, obj *model.StudentProfile) (ret graphql.Marshaler) {
@@ -4383,42 +4738,6 @@ func (ec *executionContext) ___Type_ofType(ctx context.Context, field graphql.Co
 
 // region    **************************** input.gotpl *****************************
 
-func (ec *executionContext) unmarshalInputCafeteriaFilter(ctx context.Context, obj interface{}) (model.CafeteriaFilter, error) {
-	var it model.CafeteriaFilter
-	var asMap = obj.(map[string]interface{})
-
-	for k, v := range asMap {
-		switch k {
-		case "dateStart":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dateStart"))
-			it.DateStart, err = ec.unmarshalOTimestamp2ᚖgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐTimestamp(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "dateEnd":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dateEnd"))
-			it.DateEnd, err = ec.unmarshalOTimestamp2ᚖgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐTimestamp(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "type":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
-			it.Type, err = ec.unmarshalOCafeteriaType2ᚖgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐCafeteriaType(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		}
-	}
-
-	return it, nil
-}
-
 func (ec *executionContext) unmarshalInputCommentFilter(ctx context.Context, obj interface{}) (model.CommentFilter, error) {
 	var it model.CommentFilter
 	var asMap = obj.(map[string]interface{})
@@ -4557,6 +4876,14 @@ func (ec *executionContext) unmarshalInputNewComment(ctx context.Context, obj in
 			if err != nil {
 				return it, err
 			}
+		case "anon":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("anon"))
+			it.Anon, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
 		}
 	}
 
@@ -4607,8 +4934,8 @@ func (ec *executionContext) unmarshalInputNewPost(ctx context.Context, obj inter
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputOfficalsProfileInput(ctx context.Context, obj interface{}) (model.OfficalsProfileInput, error) {
-	var it model.OfficalsProfileInput
+func (ec *executionContext) unmarshalInputOfficialsProfileInput(ctx context.Context, obj interface{}) (model.OfficialsProfileInput, error) {
+	var it model.OfficialsProfileInput
 	var asMap = obj.(map[string]interface{})
 
 	for k, v := range asMap {
@@ -4626,6 +4953,42 @@ func (ec *executionContext) unmarshalInputOfficalsProfileInput(ctx context.Conte
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
 			it.Description, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputSchoolMealFilter(ctx context.Context, obj interface{}) (model.SchoolMealFilter, error) {
+	var it model.SchoolMealFilter
+	var asMap = obj.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "dateStart":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dateStart"))
+			it.DateStart, err = ec.unmarshalOTimestamp2ᚖgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐTimestamp(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "dateEnd":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dateEnd"))
+			it.DateEnd, err = ec.unmarshalOTimestamp2ᚖgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐTimestamp(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "type":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
+			it.Type, err = ec.unmarshalOSchoolMealType2ᚖgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐSchoolMealType(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -4765,13 +5128,13 @@ func (ec *executionContext) _ProfileDetail(ctx context.Context, sel ast.Selectio
 			return graphql.Null
 		}
 		return ec._TeacherProfile(ctx, sel, obj)
-	case model.OfficalsProfile:
-		return ec._OfficalsProfile(ctx, sel, &obj)
-	case *model.OfficalsProfile:
+	case model.OfficialsProfile:
+		return ec._OfficialsProfile(ctx, sel, &obj)
+	case *model.OfficialsProfile:
 		if obj == nil {
 			return graphql.Null
 		}
-		return ec._OfficalsProfile(ctx, sel, obj)
+		return ec._OfficialsProfile(ctx, sel, obj)
 	case model.AnonProfile:
 		return ec._AnonProfile(ctx, sel, &obj)
 	case *model.AnonProfile:
@@ -4812,58 +5175,6 @@ func (ec *executionContext) _AnonProfile(ctx context.Context, sel ast.SelectionS
 	return out
 }
 
-var cafeteriaImplementors = []string{"Cafeteria"}
-
-func (ec *executionContext) _Cafeteria(ctx context.Context, sel ast.SelectionSet, obj *model.Cafeteria) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, cafeteriaImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	var invalids uint32
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("Cafeteria")
-		case "type":
-			out.Values[i] = ec._Cafeteria_type(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "calorie":
-			out.Values[i] = ec._Cafeteria_calorie(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "content":
-			out.Values[i] = ec._Cafeteria_content(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "nutrient":
-			out.Values[i] = ec._Cafeteria_nutrient(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "origin":
-			out.Values[i] = ec._Cafeteria_origin(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "date":
-			out.Values[i] = ec._Cafeteria_date(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch()
-	if invalids > 0 {
-		return graphql.Null
-	}
-	return out
-}
-
 var categoryImplementors = []string{"Category"}
 
 func (ec *executionContext) _Category(ctx context.Context, sel ast.SelectionSet, obj *model.Category) graphql.Marshaler {
@@ -4882,6 +5193,26 @@ func (ec *executionContext) _Category(ctx context.Context, sel ast.SelectionSet,
 			}
 		case "name":
 			out.Values[i] = ec._Category_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "reqPermission":
+			out.Values[i] = ec._Category_reqPermission(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "anonAble":
+			out.Values[i] = ec._Category_anonAble(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "readAbleRole":
+			out.Values[i] = ec._Category_readAbleRole(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "writeAbleRole":
+			out.Values[i] = ec._Category_writeAbleRole(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -5018,24 +5349,24 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 	return out
 }
 
-var officalsProfileImplementors = []string{"OfficalsProfile", "ProfileDetail"}
+var officialsProfileImplementors = []string{"OfficialsProfile", "ProfileDetail"}
 
-func (ec *executionContext) _OfficalsProfile(ctx context.Context, sel ast.SelectionSet, obj *model.OfficalsProfile) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, officalsProfileImplementors)
+func (ec *executionContext) _OfficialsProfile(ctx context.Context, sel ast.SelectionSet, obj *model.OfficialsProfile) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, officialsProfileImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("OfficalsProfile")
+			out.Values[i] = graphql.MarshalString("OfficialsProfile")
 		case "role":
-			out.Values[i] = ec._OfficalsProfile_role(ctx, field, obj)
+			out.Values[i] = ec._OfficialsProfile_role(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
 		case "description":
-			out.Values[i] = ec._OfficalsProfile_description(ctx, field, obj)
+			out.Values[i] = ec._OfficialsProfile_description(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -5073,14 +5404,8 @@ func (ec *executionContext) _Post(ctx context.Context, sel ast.SelectionSet, obj
 			}
 		case "like":
 			out.Values[i] = ec._Post_like(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
 		case "isLike":
 			out.Values[i] = ec._Post_isLike(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
 		case "author":
 			out.Values[i] = ec._Post_author(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -5093,9 +5418,6 @@ func (ec *executionContext) _Post(ctx context.Context, sel ast.SelectionSet, obj
 			}
 		case "content":
 			out.Values[i] = ec._Post_content(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
 		case "createAt":
 			out.Values[i] = ec._Post_createAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -5226,7 +5548,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				res = ec._Query_myProfile(ctx, field)
 				return res
 			})
-		case "cafeteria":
+		case "schoolMeal":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
 				defer func() {
@@ -5234,7 +5556,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_cafeteria(ctx, field)
+				res = ec._Query_schoolMeal(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -5254,10 +5576,90 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				}
 				return res
 			})
+		case "posts":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_posts(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "categories":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_categories(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "__type":
 			out.Values[i] = ec._Query___type(ctx, field)
 		case "__schema":
 			out.Values[i] = ec._Query___schema(ctx, field)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var schoolMealImplementors = []string{"SchoolMeal"}
+
+func (ec *executionContext) _SchoolMeal(ctx context.Context, sel ast.SelectionSet, obj *model.SchoolMeal) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, schoolMealImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("SchoolMeal")
+		case "type":
+			out.Values[i] = ec._SchoolMeal_type(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "calorie":
+			out.Values[i] = ec._SchoolMeal_calorie(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "content":
+			out.Values[i] = ec._SchoolMeal_content(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "nutrient":
+			out.Values[i] = ec._SchoolMeal_nutrient(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "origin":
+			out.Values[i] = ec._SchoolMeal_origin(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "date":
+			out.Values[i] = ec._SchoolMeal_date(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -5593,7 +5995,7 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
-func (ec *executionContext) marshalNCafeteria2ᚕᚖgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐCafeteriaᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Cafeteria) graphql.Marshaler {
+func (ec *executionContext) marshalNCategory2ᚕᚖgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐCategoryᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Category) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -5617,7 +6019,7 @@ func (ec *executionContext) marshalNCafeteria2ᚕᚖgithubᚗcomᚋosangᚑschoo
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNCafeteria2ᚖgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐCafeteria(ctx, sel, v[i])
+			ret[i] = ec.marshalNCategory2ᚖgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐCategory(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -5628,26 +6030,6 @@ func (ec *executionContext) marshalNCafeteria2ᚕᚖgithubᚗcomᚋosangᚑschoo
 	}
 	wg.Wait()
 	return ret
-}
-
-func (ec *executionContext) marshalNCafeteria2ᚖgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐCafeteria(ctx context.Context, sel ast.SelectionSet, v *model.Cafeteria) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	return ec._Cafeteria(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalNCafeteriaType2githubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐCafeteriaType(ctx context.Context, v interface{}) (model.CafeteriaType, error) {
-	var res model.CafeteriaType
-	err := res.UnmarshalGQL(v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNCafeteriaType2githubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐCafeteriaType(ctx context.Context, sel ast.SelectionSet, v model.CafeteriaType) graphql.Marshaler {
-	return v
 }
 
 func (ec *executionContext) marshalNCategory2ᚖgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐCategory(ctx context.Context, sel ast.SelectionSet, v *model.Category) graphql.Marshaler {
@@ -5774,6 +6156,43 @@ func (ec *executionContext) marshalNPost2githubᚗcomᚋosangᚑschoolᚋbackend
 	return ec._Post(ctx, sel, &v)
 }
 
+func (ec *executionContext) marshalNPost2ᚕᚖgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐPostᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Post) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNPost2ᚖgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐPost(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+	return ret
+}
+
 func (ec *executionContext) marshalNPost2ᚖgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐPost(ctx context.Context, sel ast.SelectionSet, v *model.Post) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -5831,6 +6250,63 @@ func (ec *executionContext) marshalNProfileWithToken2ᚖgithubᚗcomᚋosangᚑs
 		return graphql.Null
 	}
 	return ec._ProfileWithToken(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNSchoolMeal2ᚕᚖgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐSchoolMealᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.SchoolMeal) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNSchoolMeal2ᚖgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐSchoolMeal(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+	return ret
+}
+
+func (ec *executionContext) marshalNSchoolMeal2ᚖgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐSchoolMeal(ctx context.Context, sel ast.SelectionSet, v *model.SchoolMeal) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._SchoolMeal(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNSchoolMealType2githubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐSchoolMealType(ctx context.Context, v interface{}) (model.SchoolMealType, error) {
+	var res model.SchoolMealType
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNSchoolMealType2githubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐSchoolMealType(ctx context.Context, sel ast.SelectionSet, v model.SchoolMealType) graphql.Marshaler {
+	return v
 }
 
 func (ec *executionContext) unmarshalNSignUpInput2githubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐSignUpInput(ctx context.Context, v interface{}) (model.SignUpInput, error) {
@@ -6239,30 +6715,6 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	return graphql.MarshalBoolean(*v)
 }
 
-func (ec *executionContext) unmarshalOCafeteriaFilter2ᚖgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐCafeteriaFilter(ctx context.Context, v interface{}) (*model.CafeteriaFilter, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := ec.unmarshalInputCafeteriaFilter(ctx, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) unmarshalOCafeteriaType2ᚖgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐCafeteriaType(ctx context.Context, v interface{}) (*model.CafeteriaType, error) {
-	if v == nil {
-		return nil, nil
-	}
-	var res = new(model.CafeteriaType)
-	err := res.UnmarshalGQL(v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalOCafeteriaType2ᚖgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐCafeteriaType(ctx context.Context, sel ast.SelectionSet, v *model.CafeteriaType) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return v
-}
-
 func (ec *executionContext) marshalOComment2ᚕᚖgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐCommentᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Comment) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -6341,11 +6793,11 @@ func (ec *executionContext) marshalONothing2ᚖstring(ctx context.Context, sel a
 	return graphql.MarshalString(*v)
 }
 
-func (ec *executionContext) unmarshalOOfficalsProfileInput2ᚖgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐOfficalsProfileInput(ctx context.Context, v interface{}) (*model.OfficalsProfileInput, error) {
+func (ec *executionContext) unmarshalOOfficialsProfileInput2ᚖgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐOfficialsProfileInput(ctx context.Context, v interface{}) (*model.OfficialsProfileInput, error) {
 	if v == nil {
 		return nil, nil
 	}
-	res, err := ec.unmarshalInputOfficalsProfileInput(ctx, v)
+	res, err := ec.unmarshalInputOfficialsProfileInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -6413,6 +6865,30 @@ func (ec *executionContext) marshalOProfileWithToken2ᚖgithubᚗcomᚋosangᚑs
 		return graphql.Null
 	}
 	return ec._ProfileWithToken(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOSchoolMealFilter2ᚖgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐSchoolMealFilter(ctx context.Context, v interface{}) (*model.SchoolMealFilter, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputSchoolMealFilter(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalOSchoolMealType2ᚖgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐSchoolMealType(ctx context.Context, v interface{}) (*model.SchoolMealType, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var res = new(model.SchoolMealType)
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOSchoolMealType2ᚖgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐSchoolMealType(ctx context.Context, sel ast.SelectionSet, v *model.SchoolMealType) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return v
 }
 
 func (ec *executionContext) unmarshalOString2string(ctx context.Context, v interface{}) (string, error) {

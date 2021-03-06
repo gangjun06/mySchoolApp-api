@@ -29,7 +29,7 @@ type (
 		Role        Role               `bson:"role,omitempty"`
 		Student     *Student           `bson:"student,omitempty"`
 		Teacher     *Teacher           `bson:"teacher,omitempty"`
-		Officals    *Officals          `bson:"officals,omitempty"`
+		Officials   *Officials         `bson:"officials,omitempty"`
 	}
 	Student struct {
 		Grade  int `bson:"grade,omitempty"`
@@ -39,7 +39,7 @@ type (
 	Teacher struct {
 		Subject []string `bson:"subject,omitempty"`
 	}
-	Officals struct {
+	Officials struct {
 		Role        string `bson:"role,omitempty"`
 		Description string `bson:"description,omitempty"`
 	}
@@ -50,7 +50,7 @@ type (
 const (
 	RoleStudent Role = iota + 1
 	RoleTeacher
-	RoleOfficals
+	RoleOfficials
 	RoleAnon
 )
 
@@ -192,8 +192,8 @@ func DetailToUnion(d interface{}) model.ProfileDetail {
 		result = model.TeacherProfile{
 			Subject: v.Subject,
 		}
-	case *Officals:
-		result = model.OfficalsProfile{
+	case *Officials:
+		result = model.OfficialsProfile{
 			Role:        v.Role,
 			Description: v.Description,
 		}
@@ -201,6 +201,20 @@ func DetailToUnion(d interface{}) model.ProfileDetail {
 		result = model.AnonProfile{}
 	}
 	return result
+}
+
+func RoleListToGql(r []Role) (result []model.UserRole) {
+	for _, d := range r {
+		switch d {
+		case RoleStudent:
+			result = append(result, model.UserRoleStudent)
+		case RoleTeacher:
+			result = append(result, model.UserRoleTeacher)
+		case RoleOfficials:
+			result = append(result, model.UserRoleOfficials)
+		}
+	}
+	return
 }
 
 func StatusToEnum(s Status) model.UserStatus {
@@ -230,10 +244,10 @@ func UserToGqlType(u *User) *model.Profile {
 			Class:  u.Student.Class,
 			Number: u.Student.Number,
 		}
-	case RoleOfficals:
-		profile.Detail = model.OfficalsProfile{
-			Role:        u.Officals.Role,
-			Description: u.Officals.Description,
+	case RoleOfficials:
+		profile.Detail = model.OfficialsProfile{
+			Role:        u.Officials.Role,
+			Description: u.Officials.Description,
 		}
 	case RoleTeacher:
 		profile.Detail = model.TeacherProfile{

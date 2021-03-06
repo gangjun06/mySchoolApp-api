@@ -56,9 +56,8 @@ func HashAndSalt(origin string) string {
 // CheckPassword check password
 func CheckPassword(normal, hashed string) bool {
 	verifyHash := []byte(hashed)
-	errFailedToCompareHAshAndPassword := bcrypt.CompareHashAndPassword(verifyHash, []byte(normal))
-	if errFailedToCompareHAshAndPassword != nil {
-		log.Println(errFailedToCompareHAshAndPassword)
+	err := bcrypt.CompareHashAndPassword(verifyHash, []byte(normal))
+	if err != nil {
 		return false
 	}
 	return true
@@ -83,4 +82,18 @@ func HasPermission(req []string, user []string) bool {
 		}
 	}
 	return true
+}
+
+func If(isTrue bool, a, b interface{}) interface{} {
+	return (map[bool]interface{}{true: a, false: b})[isTrue]
+}
+
+func IfInt(isTrue bool, a, b interface{}) *int {
+	switch v := If(isTrue, a, b).(type) {
+	case int:
+		return &v
+	case *int:
+		return v
+	}
+	return nil
 }

@@ -20,8 +20,8 @@ type (
 	}
 )
 
-func GetCafeteria(filter *model.CafeteriaFilter) ([]*model.Cafeteria, error) {
-	emptyList := []*model.Cafeteria{}
+func GetSchoolMeal(filter *model.SchoolMealFilter) ([]*model.SchoolMeal, error) {
+	emptyList := []*model.SchoolMeal{}
 	param := req.Param{
 		"KEY":                conf.Get().NeisAPIKey,
 		"Type":               "json",
@@ -41,11 +41,11 @@ func GetCafeteria(filter *model.CafeteriaFilter) ([]*model.Cafeteria, error) {
 
 	if filter.Type != nil {
 		switch *filter.Type {
-		case model.CafeteriaTypeBreakfast:
+		case model.SchoolMealTypeBreakfast:
 			param["MMEAL_SC_CODE"] = 1
-		case model.CafeteriaTypeLunch:
+		case model.SchoolMealTypeLunch:
 			param["MMEAL_SC_CODE"] = 2
-		case model.CafeteriaTypeDinner:
+		case model.SchoolMealTypeDinner:
 			param["MMEAL_SC_CODE"] = 3
 		}
 	}
@@ -70,14 +70,14 @@ func GetCafeteria(filter *model.CafeteriaFilter) ([]*model.Cafeteria, error) {
 
 	target, _ := data["mealServiceDietInfo"].([]interface{})[1].(map[string]interface{})["row"].([]interface{})
 
-	var result []*model.Cafeteria
+	var result []*model.SchoolMeal
 	for _, d := range target {
 		v := d.(map[string]interface{})
 		date, err := time.Parse("20060102", v["MLSV_FROM_YMD"].(string))
 		if err != nil {
 			date = time.Now()
 		}
-		newField := model.Cafeteria{
+		newField := model.SchoolMeal{
 			Calorie:  v["CAL_INFO"].(string),
 			Content:  v["DDISH_NM"].(string),
 			Nutrient: v["NTR_INFO"].(string),
@@ -86,11 +86,11 @@ func GetCafeteria(filter *model.CafeteriaFilter) ([]*model.Cafeteria, error) {
 		}
 		switch v["MMEAL_SC_CODE"].(string) {
 		case "1":
-			newField.Type = model.CafeteriaTypeBreakfast
+			newField.Type = model.SchoolMealTypeBreakfast
 		case "2":
-			newField.Type = model.CafeteriaTypeLunch
+			newField.Type = model.SchoolMealTypeLunch
 		case "3":
-			newField.Type = model.CafeteriaTypeDinner
+			newField.Type = model.SchoolMealTypeDinner
 		}
 		result = append(result, &newField)
 	}

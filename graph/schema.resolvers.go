@@ -25,6 +25,9 @@ func (r *mutationResolver) SignIn(ctx context.Context, phone model.Phone, passwo
 	if err != nil {
 		return nil, err
 	}
+	if ok := utils.CheckPassword(password, userData.Password); !ok {
+		return nil, myerr.New(myerr.ErrPasswordWrong, "")
+	}
 	token, err := session.CreateToken(userData.ID, userData.Role, userData.Permissions)
 	if err != nil {
 		return nil, err
@@ -56,7 +59,7 @@ func (r *mutationResolver) CheckVerifyPhoneCode(ctx context.Context, number mode
 	return user.PhoneVerifyCheck(string(number), code)
 }
 
-func (r *mutationResolver) SetProfile(ctx context.Context, student *model.StudentProfileInput, teacher *model.TeacherProfileInput, officals *model.OfficalsProfileInput) (string, error) {
+func (r *mutationResolver) SetProfile(ctx context.Context, student *model.StudentProfileInput, teacher *model.TeacherProfileInput, officials *model.OfficialsProfileInput) (string, error) {
 	randomStr := utils.CreateRandomString(6)
 	cache := cache2go.Cache("profile")
 	if student != nil {
@@ -69,8 +72,8 @@ func (r *mutationResolver) SetProfile(ctx context.Context, student *model.Studen
 		cache.Add(randomStr, time.Minute*1, student)
 	} else if teacher != nil {
 		cache.Add(randomStr, time.Minute*1, teacher)
-	} else if officals != nil {
-		cache.Add(randomStr, time.Minute*1, officals)
+	} else if officials != nil {
+		cache.Add(randomStr, time.Minute*1, officials)
 	} else {
 		return "", myerr.New(myerr.ErrBadRequest, "")
 	}
@@ -114,15 +117,15 @@ func (r *mutationResolver) SignUp(ctx context.Context, input model.SignUpInput) 
 			Subject: v.Subject,
 		}
 		resultDetail = newUser.Teacher
-	case *model.OfficalsProfileInput:
-		newUser.Role = user.RoleOfficals
-		newUser.Officals = &user.Officals{
+	case *model.OfficialsProfileInput:
+		newUser.Role = user.RoleOfficials
+		newUser.Officials = &user.Officials{
 			Role: v.Role,
 		}
 		if v.Description != nil {
-			newUser.Officals.Description = *v.Description
+			newUser.Officials.Description = *v.Description
 		}
-		resultDetail = newUser.Officals
+		resultDetail = newUser.Officials
 	}
 
 	id, err := user.SignUp(newUser)
@@ -140,9 +143,14 @@ func (r *mutationResolver) SignUp(ctx context.Context, input model.SignUpInput) 
 		Detail:   user.DetailToUnion(resultDetail),
 	}
 
+	token, err := session.CreateToken(id, newUser.Role, newUser.Permissions)
+	if err != nil {
+		return nil, err
+	}
+
 	result := &model.ProfileWithToken{
 		Profile: profile,
-		Token:   "",
+		Token:   token,
 	}
 	return result, nil
 }
@@ -154,10 +162,10 @@ func (r *mutationResolver) CreateCategory(ctx context.Context, input model.NewCa
 			return user.RoleStudent
 		case model.UserRoleTeacher:
 			return user.RoleTeacher
-		case model.UserRoleOfficals:
-			return user.RoleOfficals
+		case model.UserRoleOfficials:
+			return user.RoleOfficials
 		}
-		return user.RoleOfficals
+		return user.RoleOfficials
 	}
 	category := &post.Category{
 		Name:          input.Name,
@@ -220,12 +228,16 @@ func (r *mutationResolver) AddComment(ctx context.Context, input model.NewCommen
 			return model.ObjectID(primitive.NilObjectID), myerr.New(myerr.ErrPermission, "")
 		}
 	}
-	id, err := post.NewComment(primitive.ObjectID(input.Post), user.ID, input.Content)
+	anon := false
+	if input.Anon != nil {
+		anon = *input.Anon
+	}
+	id, err := post.NewComment(primitive.ObjectID(input.Post), user.ID, input.Content, anon)
 	return model.ObjectID(id), err
 }
 
-func (r *mutationResolver) DeleteComment(ctx context.Context, id model.ObjectID) (model.ObjectID, error) {
-	panic(fmt.Errorf("not implemented"))
+func (r *mutationResolver) DeleteComment(ctx context.Context, postid model.ObjectID, commentid model.ObjectID) (string, error) {
+	return "", post.DeleteComment(primitive.ObjectID(postid), primitive.ObjectID(commentid))
 }
 
 func (r *queryResolver) MyProfile(ctx context.Context) (*model.Profile, error) {
@@ -233,12 +245,12 @@ func (r *queryResolver) MyProfile(ctx context.Context) (*model.Profile, error) {
 	return user.UserToGqlType(userData), nil
 }
 
-func (r *queryResolver) Cafeteria(ctx context.Context, filter *model.CafeteriaFilter) ([]*model.Cafeteria, error) {
+func (r *queryResolver) SchoolMeal(ctx context.Context, filter *model.SchoolMealFilter) ([]*model.SchoolMeal, error) {
 	if filter == nil {
-		filter = &model.CafeteriaFilter{}
+		filter = &model.SchoolMealFilter{}
 	}
 
-	return neis.GetCafeteria(filter)
+	return neis.GetSchoolMeal(filter)
 }
 
 func (r *queryResolver) Post(ctx context.Context, id model.ObjectID, comment *model.CommentFilter) (*model.Post, error) {
@@ -246,7 +258,7 @@ func (r *queryResolver) Post(ctx context.Context, id model.ObjectID, comment *mo
 	if category, err := post.GetCategoryByPost(primitive.ObjectID(id)); err != nil {
 		return nil, err
 	} else {
-		if ok := post.CheckUserPermission("write", category, userData.Role, userData.Permission); !ok {
+		if ok := post.CheckUserPermission("read", category, userData.Role, userData.Permission); !ok {
 			return nil, myerr.New(myerr.ErrPermission, "")
 		}
 	}
@@ -274,26 +286,94 @@ func (r *queryResolver) Post(ctx context.Context, id model.ObjectID, comment *mo
 	for _, v := range data.Comment {
 		resultComment = append(resultComment, &model.Comment{
 			ID:       model.ObjectID(v.ID),
+			Author:   user.UserToGqlType(v.AuthorData),
 			Content:  v.Content,
 			CreateAt: model.Timestamp(v.CreateAt),
 			UpdateAt: model.Timestamp(v.UpdateAt),
 		})
 	}
+	likeCnt := data.LikeCnt
+	isLike := data.IsLike
+	content := data.Content
 	return &model.Post{
 		ID: model.ObjectID(data.ID),
 		Category: &model.Category{
-			ID:   model.ObjectID(data.CategoryData.ID),
-			Name: data.CategoryData.Name,
+			ID:            model.ObjectID(data.CategoryData.ID),
+			Name:          data.CategoryData.Name,
+			ReqPermission: data.CategoryData.ReqPermission,
+			AnonAble:      data.CategoryData.AnonAble,
+			WriteAbleRole: user.RoleListToGql(data.CategoryData.WriteAbleRole),
+			ReadAbleRole:  user.RoleListToGql(data.CategoryData.ReadAbleRole),
 		},
-		Like:     data.LikeCnt,
-		IsLike:   data.IsLike,
+		Like:     &likeCnt,
+		IsLike:   &isLike,
 		Author:   user.UserToGqlType(data.AuthorData),
 		Title:    data.Title,
-		Content:  data.Content,
+		Content:  &content,
 		CreateAt: model.Timestamp(data.CreateAt),
 		UpdateAt: model.Timestamp(data.UpdateAt),
 		Comment:  resultComment,
 	}, nil
+}
+
+func (r *queryResolver) Posts(ctx context.Context, categoryID model.ObjectID, offset *int, limit *int) ([]*model.Post, error) {
+	userData := ctx.Value("data").(*session.Data)
+	if category, err := post.GetCategory(primitive.ObjectID(categoryID)); err != nil {
+		return nil, err
+	} else {
+		if ok := post.CheckUserPermission("read", category, userData.Role, userData.Permission); !ok {
+			return nil, myerr.New(myerr.ErrPermission, "")
+		}
+	}
+
+	realOffset := utils.IfInt(offset != nil, offset, 0)
+	realLimit := utils.IfInt(limit != nil, limit, 20)
+
+	data, err := post.GetPosts(primitive.ObjectID(categoryID), *realOffset, *realLimit)
+	if err != nil {
+		return nil, err
+	}
+
+	result := []*model.Post{}
+	for _, d := range data {
+		result = append(result, &model.Post{
+			ID: model.ObjectID(d.ID),
+			Category: &model.Category{
+				ID:            model.ObjectID(d.CategoryData.ID),
+				Name:          d.CategoryData.Name,
+				ReqPermission: d.CategoryData.ReqPermission,
+				AnonAble:      d.CategoryData.AnonAble,
+				WriteAbleRole: user.RoleListToGql(d.CategoryData.WriteAbleRole),
+				ReadAbleRole:  user.RoleListToGql(d.CategoryData.ReadAbleRole),
+			},
+			Author:   user.UserToGqlType(d.AuthorData),
+			Title:    d.Title,
+			CreateAt: model.Timestamp(d.CreateAt),
+			UpdateAt: model.Timestamp(d.UpdateAt),
+		})
+	}
+
+	return result, nil
+}
+
+func (r *queryResolver) Categories(ctx context.Context) ([]*model.Category, error) {
+	var result []*model.Category
+	result = []*model.Category{}
+	data, err := post.GetAllCategory()
+	if err != nil {
+		return result, err
+	}
+	for _, d := range data {
+		result = append(result, &model.Category{
+			ID:            model.ObjectID(d.ID),
+			Name:          d.Name,
+			ReqPermission: d.ReqPermission,
+			AnonAble:      d.AnonAble,
+			WriteAbleRole: user.RoleListToGql(d.WriteAbleRole),
+			ReadAbleRole:  user.RoleListToGql(d.ReadAbleRole),
+		})
+	}
+	return result, nil
 }
 
 // Mutation returns generated.MutationResolver implementation.
