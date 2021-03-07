@@ -70,7 +70,5 @@ func Sms(to, text string) error {
 		return err
 	}
 
-	fmt.Printf("%+v\n", data)
-
 	return nil
 }

@@ -1,6 +1,7 @@
 package model
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"regexp"
@@ -106,6 +107,12 @@ func UnmarshalUint(v interface{}) (uint, error) {
 	case int:
 	case int64:
 		return uint(v), nil
+	case json.Number:
+		value, err := v.Int64()
+		if err != nil {
+			return 0, fmt.Errorf("%T is not an int", v)
+		}
+		return uint(value), nil
 	default:
 		return 0, fmt.Errorf("%T is not an int", v)
 	}

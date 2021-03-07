@@ -76,6 +76,11 @@ type ComplexityRoot struct {
 		UpdateAt func(childComplexity int) int
 	}
 
+	EmailAliases struct {
+		From func(childComplexity int) int
+		To   func(childComplexity int) int
+	}
+
 	Mutation struct {
 		AddCalendar          func(childComplexity int, input model.NewCalendar) int
 		AddComment           func(childComplexity int, input model.NewComment) int
@@ -84,12 +89,14 @@ type ComplexityRoot struct {
 		CreatePost           func(childComplexity int, input model.NewPost) int
 		DeleteCalendar       func(childComplexity int, target model.ObjectID) int
 		DeleteComment        func(childComplexity int, postid model.ObjectID, commentid model.ObjectID) int
+		DeleteEmailAliases   func(childComplexity int) int
 		DeleteSchedule       func(childComplexity int, target model.ScheduleDelFilter) int
 		LikePost             func(childComplexity int, input model.LikePostInput) int
 		SetProfile           func(childComplexity int, student *model.StudentProfileInput, teacher *model.TeacherProfileInput, officials *model.OfficialsProfileInput) int
 		SignIn               func(childComplexity int, phone model.Phone, password string) int
 		SignOut              func(childComplexity int) int
 		SignUp               func(childComplexity int, input model.SignUpInput) int
+		UpdateEmailAliases   func(childComplexity int, input model.EmailAliasesInput) int
 		UpdateSchedule       func(childComplexity int, input model.UpdateSchedule) int
 		VerifyPhone          func(childComplexity int, number model.Phone) int
 	}
@@ -127,13 +134,14 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		Calendar   func(childComplexity int, filter model.CalendarFilter) int
-		Categories func(childComplexity int) int
-		MyProfile  func(childComplexity int) int
-		Post       func(childComplexity int, id model.ObjectID, comment *model.CommentFilter) int
-		Posts      func(childComplexity int, categoryID model.ObjectID, offset *int, limit *int) int
-		Schedule   func(childComplexity int, filter model.ScheduleFilter) int
-		SchoolMeal func(childComplexity int, filter *model.SchoolMealFilter) int
+		Calendar     func(childComplexity int, filter model.CalendarFilter) int
+		Categories   func(childComplexity int) int
+		EmailAliases func(childComplexity int) int
+		MyProfile    func(childComplexity int) int
+		Post         func(childComplexity int, id model.ObjectID, comment *model.CommentFilter) int
+		Posts        func(childComplexity int, categoryID model.ObjectID, offset *int, limit *int) int
+		Schedule     func(childComplexity int, filter model.ScheduleFilter) int
+		SchoolMeal   func(childComplexity int, filter *model.SchoolMealFilter) int
 	}
 
 	Schedule struct {
@@ -183,6 +191,8 @@ type MutationResolver interface {
 	DeleteCalendar(ctx context.Context, target model.ObjectID) (string, error)
 	UpdateSchedule(ctx context.Context, input model.UpdateSchedule) (string, error)
 	DeleteSchedule(ctx context.Context, target model.ScheduleDelFilter) (string, error)
+	UpdateEmailAliases(ctx context.Context, input model.EmailAliasesInput) (string, error)
+	DeleteEmailAliases(ctx context.Context) (string, error)
 }
 type QueryResolver interface {
 	MyProfile(ctx context.Context) (*model.Profile, error)
@@ -192,6 +202,7 @@ type QueryResolver interface {
 	Categories(ctx context.Context) ([]*model.Category, error)
 	Calendar(ctx context.Context, filter model.CalendarFilter) ([]*model.Calendar, error)
 	Schedule(ctx context.Context, filter model.ScheduleFilter) ([]*model.Schedule, error)
+	EmailAliases(ctx context.Context) (*model.EmailAliases, error)
 }
 
 type executableSchema struct {
@@ -342,6 +353,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Comment.UpdateAt(childComplexity), true
 
+	case "EmailAliases.from":
+		if e.complexity.EmailAliases.From == nil {
+			break
+		}
+
+		return e.complexity.EmailAliases.From(childComplexity), true
+
+	case "EmailAliases.to":
+		if e.complexity.EmailAliases.To == nil {
+			break
+		}
+
+		return e.complexity.EmailAliases.To(childComplexity), true
+
 	case "Mutation.addCalendar":
 		if e.complexity.Mutation.AddCalendar == nil {
 			break
@@ -426,6 +451,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.DeleteComment(childComplexity, args["postid"].(model.ObjectID), args["commentid"].(model.ObjectID)), true
 
+	case "Mutation.deleteEmailAliases":
+		if e.complexity.Mutation.DeleteEmailAliases == nil {
+			break
+		}
+
+		return e.complexity.Mutation.DeleteEmailAliases(childComplexity), true
+
 	case "Mutation.deleteSchedule":
 		if e.complexity.Mutation.DeleteSchedule == nil {
 			break
@@ -492,6 +524,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.SignUp(childComplexity, args["input"].(model.SignUpInput)), true
+
+	case "Mutation.updateEmailAliases":
+		if e.complexity.Mutation.UpdateEmailAliases == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateEmailAliases_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateEmailAliases(childComplexity, args["input"].(model.EmailAliasesInput)), true
 
 	case "Mutation.updateSchedule":
 		if e.complexity.Mutation.UpdateSchedule == nil {
@@ -675,6 +719,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.Categories(childComplexity), true
+
+	case "Query.emailAliases":
+		if e.complexity.Query.EmailAliases == nil {
+			break
+		}
+
+		return e.complexity.Query.EmailAliases(childComplexity), true
 
 	case "Query.myProfile":
 		if e.complexity.Query.MyProfile == nil {
@@ -943,6 +994,7 @@ enum UserRole {
   Officials
 }
 
+
 type Profile {
   id: ObjectID!
   name: String!
@@ -1140,6 +1192,16 @@ type Schedule {
   classRoom: String!
 }
 
+input EmailAliasesInput {
+  from: String!
+  to: String!
+}
+
+type EmailAliases {
+  from: String!
+  to: String!
+}
+
 
 type Query {
   myProfile: Profile @auth(getInfo: true)
@@ -1150,6 +1212,8 @@ type Query {
 
   calendar(filter: CalendarFilter!): [Calendar!]!
   schedule(filter: ScheduleFilter!): [Schedule!]!
+
+  emailAliases: EmailAliases @auth(getInfo: true)
 }
 
 type Mutation {
@@ -1165,9 +1229,9 @@ type Mutation {
   signUp(input: SignUpInput!): ProfileWithToken
   createCategory(input: NewCategory!): ObjectID! @auth(reqPermission: ["admin"])
 
-  createPost(input: NewPost!): ObjectID! @auth(getInfo: true)
-  likePost(input: LikePostInput!): Nothing @auth(getInfo: true)
-  addComment(input: NewComment!): ObjectID! @auth(getInfo: true)
+  createPost(input: NewPost!): ObjectID! @auth
+  likePost(input: LikePostInput!): Nothing @auth
+  addComment(input: NewComment!): ObjectID! @auth
   deleteComment(postid: ObjectID!, commentid: ObjectID!): Nothing! @auth
   
   addCalendar(input: NewCalendar!): ObjectID! @auth(reqPermission: ["calendar"])
@@ -1175,6 +1239,9 @@ type Mutation {
 
   updateSchedule(input: UpdateSchedule!): Nothing! @auth(reqPermission: ["schedule"])
   deleteSchedule(target: ScheduleDelFilter!): Nothing! @auth(reqPermission: ["schedule"])
+
+  updateEmailAliases(input: EmailAliasesInput!): Nothing! @auth(getInfo: true)
+  deleteEmailAliases: Nothing! @auth(getInfo: true)
 }
 
 scalar Phone
@@ -1435,6 +1502,21 @@ func (ec *executionContext) field_Mutation_signUp_args(ctx context.Context, rawA
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 		arg0, err = ec.unmarshalNSignUpInput2githubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐSignUpInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateEmailAliases_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.EmailAliasesInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNEmailAliasesInput2githubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐEmailAliasesInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -2290,6 +2372,76 @@ func (ec *executionContext) _Comment_updateAt(ctx context.Context, field graphql
 	return ec.marshalNTimestamp2githubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐTimestamp(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _EmailAliases_from(ctx context.Context, field graphql.CollectedField, obj *model.EmailAliases) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "EmailAliases",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.From, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _EmailAliases_to(ctx context.Context, field graphql.CollectedField, obj *model.EmailAliases) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "EmailAliases",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.To, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Mutation_signIn(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -2647,14 +2799,10 @@ func (ec *executionContext) _Mutation_createPost(ctx context.Context, field grap
 			return ec.resolvers.Mutation().CreatePost(rctx, args["input"].(model.NewPost))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
-			getInfo, err := ec.unmarshalOBoolean2ᚖbool(ctx, true)
-			if err != nil {
-				return nil, err
-			}
 			if ec.directives.Auth == nil {
 				return nil, errors.New("directive auth is not implemented")
 			}
-			return ec.directives.Auth(ctx, nil, directive0, getInfo, nil)
+			return ec.directives.Auth(ctx, nil, directive0, nil, nil)
 		}
 
 		tmp, err := directive1(rctx)
@@ -2713,14 +2861,10 @@ func (ec *executionContext) _Mutation_likePost(ctx context.Context, field graphq
 			return ec.resolvers.Mutation().LikePost(rctx, args["input"].(model.LikePostInput))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
-			getInfo, err := ec.unmarshalOBoolean2ᚖbool(ctx, true)
-			if err != nil {
-				return nil, err
-			}
 			if ec.directives.Auth == nil {
 				return nil, errors.New("directive auth is not implemented")
 			}
-			return ec.directives.Auth(ctx, nil, directive0, getInfo, nil)
+			return ec.directives.Auth(ctx, nil, directive0, nil, nil)
 		}
 
 		tmp, err := directive1(rctx)
@@ -2776,14 +2920,10 @@ func (ec *executionContext) _Mutation_addComment(ctx context.Context, field grap
 			return ec.resolvers.Mutation().AddComment(rctx, args["input"].(model.NewComment))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
-			getInfo, err := ec.unmarshalOBoolean2ᚖbool(ctx, true)
-			if err != nil {
-				return nil, err
-			}
 			if ec.directives.Auth == nil {
 				return nil, errors.New("directive auth is not implemented")
 			}
-			return ec.directives.Auth(ctx, nil, directive0, getInfo, nil)
+			return ec.directives.Auth(ctx, nil, directive0, nil, nil)
 		}
 
 		tmp, err := directive1(rctx)
@@ -3110,6 +3250,131 @@ func (ec *executionContext) _Mutation_deleteSchedule(ctx context.Context, field 
 				return nil, errors.New("directive auth is not implemented")
 			}
 			return ec.directives.Auth(ctx, nil, directive0, nil, reqPermission)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(string); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be string`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNNothing2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_updateEmailAliases(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_updateEmailAliases_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().UpdateEmailAliases(rctx, args["input"].(model.EmailAliasesInput))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			getInfo, err := ec.unmarshalOBoolean2ᚖbool(ctx, true)
+			if err != nil {
+				return nil, err
+			}
+			if ec.directives.Auth == nil {
+				return nil, errors.New("directive auth is not implemented")
+			}
+			return ec.directives.Auth(ctx, nil, directive0, getInfo, nil)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(string); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be string`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNNothing2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_deleteEmailAliases(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().DeleteEmailAliases(rctx)
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			getInfo, err := ec.unmarshalOBoolean2ᚖbool(ctx, true)
+			if err != nil {
+				return nil, err
+			}
+			if ec.directives.Auth == nil {
+				return nil, errors.New("directive auth is not implemented")
+			}
+			return ec.directives.Auth(ctx, nil, directive0, getInfo, nil)
 		}
 
 		tmp, err := directive1(rctx)
@@ -4191,6 +4456,62 @@ func (ec *executionContext) _Query_schedule(ctx context.Context, field graphql.C
 	res := resTmp.([]*model.Schedule)
 	fc.Result = res
 	return ec.marshalNSchedule2ᚕᚖgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐScheduleᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_emailAliases(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Query().EmailAliases(rctx)
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			getInfo, err := ec.unmarshalOBoolean2ᚖbool(ctx, true)
+			if err != nil {
+				return nil, err
+			}
+			if ec.directives.Auth == nil {
+				return nil, errors.New("directive auth is not implemented")
+			}
+			return ec.directives.Auth(ctx, nil, directive0, getInfo, nil)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*model.EmailAliases); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/osang-school/backend/graph/model.EmailAliases`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.EmailAliases)
+	fc.Result = res
+	return ec.marshalOEmailAliases2ᚖgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐEmailAliases(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -6045,6 +6366,34 @@ func (ec *executionContext) unmarshalInputCommentFilter(ctx context.Context, obj
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputEmailAliasesInput(ctx context.Context, obj interface{}) (model.EmailAliasesInput, error) {
+	var it model.EmailAliasesInput
+	var asMap = obj.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "from":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("from"))
+			it.From, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "to":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("to"))
+			it.To, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputLikePostInput(ctx context.Context, obj interface{}) (model.LikePostInput, error) {
 	var it model.LikePostInput
 	var asMap = obj.(map[string]interface{})
@@ -6818,6 +7167,38 @@ func (ec *executionContext) _Comment(ctx context.Context, sel ast.SelectionSet, 
 	return out
 }
 
+var emailAliasesImplementors = []string{"EmailAliases"}
+
+func (ec *executionContext) _EmailAliases(ctx context.Context, sel ast.SelectionSet, obj *model.EmailAliases) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, emailAliasesImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("EmailAliases")
+		case "from":
+			out.Values[i] = ec._EmailAliases_from(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "to":
+			out.Values[i] = ec._EmailAliases_to(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var mutationImplementors = []string{"Mutation"}
 
 func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet) graphql.Marshaler {
@@ -6899,6 +7280,16 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			}
 		case "deleteSchedule":
 			out.Values[i] = ec._Mutation_deleteSchedule(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "updateEmailAliases":
+			out.Values[i] = ec._Mutation_updateEmailAliases(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "deleteEmailAliases":
+			out.Values[i] = ec._Mutation_deleteEmailAliases(ctx, field)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -7194,6 +7585,17 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
+				return res
+			})
+		case "emailAliases":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_emailAliases(ctx, field)
 				return res
 			})
 		case "__type":
@@ -7756,6 +8158,11 @@ func (ec *executionContext) marshalNComment2ᚖgithubᚗcomᚋosangᚑschoolᚋb
 		return graphql.Null
 	}
 	return ec._Comment(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNEmailAliasesInput2githubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐEmailAliasesInput(ctx context.Context, v interface{}) (model.EmailAliasesInput, error) {
+	res, err := ec.unmarshalInputEmailAliasesInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalNInt2int(ctx context.Context, v interface{}) (int, error) {
@@ -8549,6 +8956,13 @@ func (ec *executionContext) unmarshalOCommentFilter2ᚖgithubᚗcomᚋosangᚑsc
 	}
 	res, err := ec.unmarshalInputCommentFilter(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOEmailAliases2ᚖgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐEmailAliases(ctx context.Context, sel ast.SelectionSet, v *model.EmailAliases) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._EmailAliases(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOInt2ᚖint(ctx context.Context, v interface{}) (*int, error) {

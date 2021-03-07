@@ -6,6 +6,7 @@ package graph
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/muesli/cache2go"
@@ -215,8 +216,7 @@ func (r *mutationResolver) LikePost(ctx context.Context, input model.LikePostInp
 			return nil, myerr.New(myerr.ErrPermission, "")
 		}
 	}
-	data := ctx.Value("data").(*session.Data)
-	err := post.PostLike(primitive.ObjectID(input.Post), data.ID, input.Status)
+	err := post.PostLike(primitive.ObjectID(input.Post), user.ID, input.Status)
 	return nil, err
 }
 
@@ -266,6 +266,37 @@ func (r *mutationResolver) UpdateSchedule(ctx context.Context, input model.Updat
 
 func (r *mutationResolver) DeleteSchedule(ctx context.Context, target model.ScheduleDelFilter) (string, error) {
 	return "", info.DeleteSchedule(uint(target.Grade), uint(target.Class), uint(target.Dow), uint(target.Period))
+}
+
+func (r *mutationResolver) UpdateEmailAliases(ctx context.Context, input model.EmailAliasesInput) (string, error) {
+	if ok := strings.HasSuffix(input.From, "@osang.xyz"); !ok {
+		return "", myerr.New(myerr.ErrBadRequest, "invalid email format")
+	}
+	userData := ctx.Value("user").(*user.User)
+	origin := userData.EmailAliases.From
+
+	if err := user.MailAliasesUpdate(userData.ID, input.From, input.To, origin != "" && origin == input.From); err != nil {
+		return "", err
+	}
+
+	if origin != "" && origin != input.From {
+		if err := user.MailAliasesRemove(origin); err != nil {
+			return "", err
+		}
+	}
+
+	return "", nil
+}
+
+func (r *mutationResolver) DeleteEmailAliases(ctx context.Context) (string, error) {
+	userData := ctx.Value("user").(*user.User)
+	if err := user.MailAliasesRemove(userData.EmailAliases.From); err != nil {
+		return "", err
+	}
+	if err := user.MailAliasesRemoveDB(userData.ID); err != nil {
+		return "", err
+	}
+	return "", nil
 }
 
 func (r *queryResolver) MyProfile(ctx context.Context) (*model.Profile, error) {
@@ -443,6 +474,14 @@ func (r *queryResolver) Schedule(ctx context.Context, filter model.ScheduleFilte
 		})
 	}
 	return result, nil
+}
+
+func (r *queryResolver) EmailAliases(ctx context.Context) (*model.EmailAliases, error) {
+	userData := ctx.Value("user").(*user.User)
+	return &model.EmailAliases{
+		From: userData.EmailAliases.From,
+		To:   userData.EmailAliases.To,
+	}, nil
 }
 
 // Mutation returns generated.MutationResolver implementation.

@@ -24,6 +24,11 @@ type Config struct {
 		Addr string
 		Pass string
 	}
+	Email struct {
+		Url      string
+		UserName string
+		Password string
+	}
 }
 
 var conf *Config
@@ -45,6 +50,10 @@ func Init() {
 
 	flag.StringVar(&conf.Redis.Addr, "redis_addr", os.Getenv("REDIS_ADDR"), "address of redis")
 	flag.StringVar(&conf.Redis.Pass, "redis_pass", os.Getenv("REDIS_PASS"), "password of redis")
+
+	flag.StringVar(&conf.Email.Url, "mail_url", os.Getenv("EMAIL_URL"), "MailInABox url")
+	flag.StringVar(&conf.Email.UserName, "mail_username", os.Getenv("EMAIL_USERNAME"), "username")
+	flag.StringVar(&conf.Email.Password, "mail_password", os.Getenv("EMAIL_PASSWORD"), "password")
 
 	flag.Parse()
 }

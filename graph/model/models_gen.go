@@ -56,6 +56,16 @@ type CommentFilter struct {
 	LoadOnlyComment *bool `json:"loadOnlyComment"`
 }
 
+type EmailAliases struct {
+	From string `json:"from"`
+	To   string `json:"to"`
+}
+
+type EmailAliasesInput struct {
+	From string `json:"from"`
+	To   string `json:"to"`
+}
+
 type LikePostInput struct {
 	Post   ObjectID `json:"post"`
 	Status bool     `json:"status"`

@@ -20,6 +20,7 @@ enum UserRole {
   Officials
 }
 
+
 type Profile {
   id: ObjectID!
   name: String!
@@ -217,6 +218,16 @@ type Schedule {
   classRoom: String!
 }
 
+input EmailAliasesInput {
+  from: String!
+  to: String!
+}
+
+type EmailAliases {
+  from: String!
+  to: String!
+}
+
 
 type Query {
   myProfile: Profile @auth(getInfo: true)
@@ -227,6 +238,8 @@ type Query {
 
   calendar(filter: CalendarFilter!): [Calendar!]!
   schedule(filter: ScheduleFilter!): [Schedule!]!
+
+  emailAliases: EmailAliases @auth(getInfo: true)
 }
 
 type Mutation {
@@ -242,9 +255,9 @@ type Mutation {
   signUp(input: SignUpInput!): ProfileWithToken
   createCategory(input: NewCategory!): ObjectID! @auth(reqPermission: ["admin"])
 
-  createPost(input: NewPost!): ObjectID! @auth(getInfo: true)
-  likePost(input: LikePostInput!): Nothing @auth(getInfo: true)
-  addComment(input: NewComment!): ObjectID! @auth(getInfo: true)
+  createPost(input: NewPost!): ObjectID! @auth
+  likePost(input: LikePostInput!): Nothing @auth
+  addComment(input: NewComment!): ObjectID! @auth
   deleteComment(postid: ObjectID!, commentid: ObjectID!): Nothing! @auth
   
   addCalendar(input: NewCalendar!): ObjectID! @auth(reqPermission: ["calendar"])
@@ -252,6 +265,9 @@ type Mutation {
 
   updateSchedule(input: UpdateSchedule!): Nothing! @auth(reqPermission: ["schedule"])
   deleteSchedule(target: ScheduleDelFilter!): Nothing! @auth(reqPermission: ["schedule"])
+
+  updateEmailAliases(input: EmailAliasesInput!): Nothing! @auth(getInfo: true)
+  deleteEmailAliases: Nothing! @auth(getInfo: true)
 }
 
 scalar Phone
