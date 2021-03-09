@@ -19,6 +19,7 @@ import (
 	"github.com/osang-school/backend/internal/session"
 	"github.com/osang-school/backend/internal/user"
 	"github.com/osang-school/backend/internal/utils"
+	osangdata "github.com/osang-school/data"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -252,10 +253,10 @@ func (r *mutationResolver) DeleteCalendar(ctx context.Context, target model.Obje
 
 func (r *mutationResolver) UpdateSchedule(ctx context.Context, input model.UpdateSchedule) (string, error) {
 	data := info.UpdateScheduleInput{
-		uint(input.Grade),
-		uint(input.Class),
-		uint(input.Dow),
-		uint(input.Period),
+		input.Grade,
+		input.Class,
+		input.Dow,
+		input.Period,
 		input.Subject,
 		input.Teacher,
 		input.Description,
@@ -481,6 +482,76 @@ func (r *queryResolver) EmailAliases(ctx context.Context) (*model.EmailAliases, 
 	return &model.EmailAliases{
 		From: userData.EmailAliases.From,
 		To:   userData.EmailAliases.To,
+	}, nil
+}
+
+func (r *queryResolver) HomepageList(ctx context.Context, filter *model.HomepageListFilter) ([]*model.HomepageListType, error) {
+	var url osangdata.Url
+	switch filter.Board {
+	case model.HomepageBoardNotice:
+		url = osangdata.UrlNotice
+	case model.HomepageBoardAdministration:
+		url = osangdata.UrlAdministration
+	case model.HomepageBoardEvaluationPlan:
+		url = osangdata.UrlEvaluationPlan
+	case model.HomepageBoardPrints:
+		url = osangdata.UrlPrints
+	case model.HomepageBoardRule:
+		url = osangdata.UrlRule
+	}
+
+	data, err := osangdata.CrawlList(url, filter.Page)
+	if err != nil {
+		return nil, myerr.New(myerr.ErrServer, err.Error())
+	}
+	var result []*model.HomepageListType
+	for _, d := range data {
+		result = append(result, &model.HomepageListType{
+			ID:        d.ID,
+			Number:    d.Number,
+			Title:     d.Title,
+			WrittenBy: d.WrittenBy,
+			CreateAt:  model.Timestamp(d.CreateAt),
+		})
+	}
+	return result, nil
+}
+
+func (r *queryResolver) HomepageDetail(ctx context.Context, filter *model.HomepageDetailFilter) (*model.HomepageDetailType, error) {
+	var url osangdata.Url
+	switch filter.Board {
+	case model.HomepageBoardNotice:
+		url = osangdata.UrlNotice
+	case model.HomepageBoardAdministration:
+		url = osangdata.UrlAdministration
+	case model.HomepageBoardEvaluationPlan:
+		url = osangdata.UrlEvaluationPlan
+	case model.HomepageBoardPrints:
+		url = osangdata.UrlPrints
+	case model.HomepageBoardRule:
+		url = osangdata.UrlRule
+	}
+
+	data, err := osangdata.CrawlPage(url, filter.ID)
+	if err != nil {
+		return nil, myerr.New(myerr.ErrServer, err.Error())
+	}
+	var files []*model.HomepageFileType
+	for _, d := range data.Files {
+		files = append(files, &model.HomepageFileType{
+			Name:     d.Name,
+			Download: d.Download,
+			Preview:  d.Preview,
+		})
+	}
+	return &model.HomepageDetailType{
+		ID:        data.ID,
+		Title:     data.Title,
+		WrittenBy: data.WrittenBy,
+		Content:   data.Content,
+		Images:    data.Images,
+		Files:     files,
+		CreateAt:  model.Timestamp(data.CreateAt),
 	}, nil
 }
 

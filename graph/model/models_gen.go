@@ -66,6 +66,40 @@ type EmailAliasesInput struct {
 	To   string `json:"to"`
 }
 
+type HomepageDetailFilter struct {
+	Board HomepageBoard `json:"board"`
+	ID    uint          `json:"id"`
+}
+
+type HomepageDetailType struct {
+	ID        uint                `json:"ID"`
+	Title     string              `json:"Title"`
+	WrittenBy string              `json:"WrittenBy"`
+	CreateAt  Timestamp           `json:"CreateAt"`
+	Content   string              `json:"Content"`
+	Images    []string            `json:"Images"`
+	Files     []*HomepageFileType `json:"Files"`
+}
+
+type HomepageFileType struct {
+	Name     string `json:"Name"`
+	Download string `json:"Download"`
+	Preview  string `json:"Preview"`
+}
+
+type HomepageListFilter struct {
+	Board HomepageBoard `json:"board"`
+	Page  uint          `json:"page"`
+}
+
+type HomepageListType struct {
+	ID        uint      `json:"ID"`
+	Number    uint      `json:"Number"`
+	Title     string    `json:"Title"`
+	WrittenBy string    `json:"WrittenBy"`
+	CreateAt  Timestamp `json:"CreateAt"`
+}
+
 type LikePostInput struct {
 	Post   ObjectID `json:"post"`
 	Status bool     `json:"status"`
@@ -220,6 +254,53 @@ type UpdateSchedule struct {
 	Teacher     string `json:"teacher"`
 	Description string `json:"description"`
 	ClassRoom   string `json:"classRoom"`
+}
+
+type HomepageBoard string
+
+const (
+	HomepageBoardNotice         HomepageBoard = "Notice"
+	HomepageBoardPrints         HomepageBoard = "Prints"
+	HomepageBoardRule           HomepageBoard = "Rule"
+	HomepageBoardEvaluationPlan HomepageBoard = "EvaluationPlan"
+	HomepageBoardAdministration HomepageBoard = "Administration"
+)
+
+var AllHomepageBoard = []HomepageBoard{
+	HomepageBoardNotice,
+	HomepageBoardPrints,
+	HomepageBoardRule,
+	HomepageBoardEvaluationPlan,
+	HomepageBoardAdministration,
+}
+
+func (e HomepageBoard) IsValid() bool {
+	switch e {
+	case HomepageBoardNotice, HomepageBoardPrints, HomepageBoardRule, HomepageBoardEvaluationPlan, HomepageBoardAdministration:
+		return true
+	}
+	return false
+}
+
+func (e HomepageBoard) String() string {
+	return string(e)
+}
+
+func (e *HomepageBoard) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = HomepageBoard(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid HomepageBoard", str)
+	}
+	return nil
+}
+
+func (e HomepageBoard) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 type SchoolMealType string

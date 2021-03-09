@@ -7,7 +7,7 @@ union ProfileDetail =
     StudentProfile
   | TeacherProfile
   | OfficialsProfile
-  | AnonProfile 
+  | AnonProfile
 enum UserStatus {
   WAIT
   USER
@@ -19,7 +19,6 @@ enum UserRole {
   Teacher
   Officials
 }
-
 
 type Profile {
   id: ObjectID!
@@ -228,18 +227,63 @@ type EmailAliases {
   to: String!
 }
 
+enum HomepageBoard {
+  Notice
+  Prints
+  Rule
+  EvaluationPlan
+  Administration
+}
+
+input HomepageListFilter {
+  board: HomepageBoard!
+  page: Uint!
+}
+
+input HomepageDetailFilter {
+  board: HomepageBoard!
+  id: Uint!
+}
+
+type HomepageListType {
+  ID: Uint!
+  Number: Uint!
+  Title: String!
+  WrittenBy: String!
+  CreateAt: Timestamp!
+}
+
+type HomepageDetailType {
+  ID: Uint!
+  Title: String!
+  WrittenBy: String!
+  CreateAt: Timestamp!
+  Content: String!
+  Images: [String!]!
+  Files: [HomepageFileType!]!
+}
+
+type HomepageFileType {
+  Name: String!
+  Download: String!
+  Preview: String!
+}
 
 type Query {
   myProfile: Profile @auth(getInfo: true)
   schoolMeal(filter: SchoolMealFilter): [SchoolMeal!]!
   post(id: ObjectID!, comment: CommentFilter): Post! @auth(getInfo: true)
-  posts(categoryID: ObjectID!, offset: Int, limit: Int): [Post!]! @auth(getInfo: true)
+  posts(categoryID: ObjectID!, offset: Int, limit: Int): [Post!]!
+    @auth(getInfo: true)
   categories: [Category!]! @auth
 
   calendar(filter: CalendarFilter!): [Calendar!]!
   schedule(filter: ScheduleFilter!): [Schedule!]!
 
   emailAliases: EmailAliases @auth(getInfo: true)
+
+  homepageList(filter: HomepageListFilter): [HomepageListType!]
+  homepageDetail(filter: HomepageDetailFilter): HomepageDetailType
 }
 
 type Mutation {
@@ -259,12 +303,14 @@ type Mutation {
   likePost(input: LikePostInput!): Nothing @auth
   addComment(input: NewComment!): ObjectID! @auth
   deleteComment(postid: ObjectID!, commentid: ObjectID!): Nothing! @auth
-  
+
   addCalendar(input: NewCalendar!): ObjectID! @auth(reqPermission: ["calendar"])
   deleteCalendar(target: ObjectID!): Nothing! @auth(reqPermission: ["calendar"])
 
-  updateSchedule(input: UpdateSchedule!): Nothing! @auth(reqPermission: ["schedule"])
-  deleteSchedule(target: ScheduleDelFilter!): Nothing! @auth(reqPermission: ["schedule"])
+  updateSchedule(input: UpdateSchedule!): Nothing!
+    @auth(reqPermission: ["schedule"])
+  deleteSchedule(target: ScheduleDelFilter!): Nothing!
+    @auth(reqPermission: ["schedule"])
 
   updateEmailAliases(input: EmailAliasesInput!): Nothing! @auth(getInfo: true)
   deleteEmailAliases: Nothing! @auth(getInfo: true)

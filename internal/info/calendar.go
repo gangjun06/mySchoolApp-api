@@ -3,8 +3,8 @@ package info
 import (
 	"github.com/osang-school/backend/graph/myerr"
 	"github.com/osang-school/backend/internal/db/mongodb"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"gopkg.in/mgo.v2/bson"
 )
 
 type (
