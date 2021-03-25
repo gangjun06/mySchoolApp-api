@@ -32,7 +32,6 @@ func isPhoneValid(p string) bool {
 type Phone string
 
 func (p Phone) MarshalGQL(w io.Writer) {
-	fmt.Println("Marshal: ", p)
 	io.WriteString(w, strconv.Quote(string(p)))
 }
 

@@ -24,6 +24,7 @@ func Init() {
 	C = redis.NewClient(opt)
 
 	if result := C.Ping(); result.Err() != nil {
+		log.Println("error connect redis")
 		panic(result.Err())
 	}
 }

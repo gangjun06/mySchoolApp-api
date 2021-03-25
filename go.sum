@@ -143,6 +143,12 @@ github.com/opentracing/basictracer-go v1.0.0/go.mod h1:QfBfYuafItcjQuMwinw9GhYKw
 github.com/opentracing/opentracing-go v1.0.2/go.mod h1:UkNAQd3GIcIGf0SeVgPpRdFStlNbqXla1AfSYxPUl2o=
 github.com/osang-school/data v0.0.0-20210308141502-a02f300338ed h1:dbQ/jKjf6h4AuMZe90rl4uexQdr3uchgobYvOKh4Xhk=
 github.com/osang-school/data v0.0.0-20210308141502-a02f300338ed/go.mod h1:3qClpgAYuVNnEs5ykWjdPhDcOMRodNIQca4QxrHO3MM=
+github.com/osang-school/data v0.0.0-20210309120922-a04216336903 h1:MdThYCCKSPz1KBSET/24gqKT4eD/nxuaO23CZD1QPVs=
+github.com/osang-school/data v0.0.0-20210309120922-a04216336903/go.mod h1:3qClpgAYuVNnEs5ykWjdPhDcOMRodNIQca4QxrHO3MM=
+github.com/osang-school/data v0.0.0-20210321113012-2ff7db234416 h1:tMAGO94GsdjijVOY51zg1Vt9WGfUDZLQXviLjvj8HKw=
+github.com/osang-school/data v0.0.0-20210321113012-2ff7db234416/go.mod h1:3qClpgAYuVNnEs5ykWjdPhDcOMRodNIQca4QxrHO3MM=
+github.com/osang-school/data v0.0.0-20210321130103-0dc59e4b9101 h1:r2s7FWcPtpnQzJnZuaFGKOp/Rc+FM+r76sXyqg99vl8=
+github.com/osang-school/data v0.0.0-20210321130103-0dc59e4b9101/go.mod h1:3qClpgAYuVNnEs5ykWjdPhDcOMRodNIQca4QxrHO3MM=
 github.com/pelletier/go-toml v1.7.0 h1:7utD74fnzVc/cpcyy8sjrlFr5vYpypUixARcHIMIGuI=
 github.com/pelletier/go-toml v1.7.0/go.mod h1:vwGMzjaWMwyfHwgIBhI2YUM4fB6nL6lVAvS1LBMMhTE=
 github.com/pkg/errors v0.8.0/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=

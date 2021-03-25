@@ -20,6 +20,12 @@ enum UserRole {
   Officials
 }
 
+enum PostStatus {
+  Normal
+  Deleted
+  Reported
+}
+
 type Profile {
   id: ObjectID!
   name: String!
@@ -27,6 +33,7 @@ type Profile {
   phone: Phone
   detail: ProfileDetail!
   status: UserStatus!
+  role: UserRole!
 }
 
 type StudentProfile {
@@ -107,6 +114,7 @@ type Post {
   createAt: Timestamp!
   updateAt: Timestamp!
   comment: [Comment!]
+  status: PostStatus!
 }
 
 type Comment {
@@ -115,10 +123,12 @@ type Comment {
   content: String!
   createAt: Timestamp!
   updateAt: Timestamp!
+  status: PostStatus!
 }
 
 input NewCategory {
   name: String!
+  description: String!
   reqPermission: [String!]!
   anonAble: Boolean!
   readAbleRole: [UserRole!]!
@@ -128,6 +138,7 @@ input NewCategory {
 type Category {
   id: ObjectID!
   name: String!
+  description: String!
   reqPermission: [String!]!
   anonAble: Boolean!
   readAbleRole: [UserRole!]!
@@ -246,35 +257,34 @@ input HomepageDetailFilter {
 }
 
 type HomepageListType {
-  ID: Uint!
-  Number: Uint!
-  Title: String!
-  WrittenBy: String!
-  CreateAt: Timestamp!
+  id: Uint!
+  number: Uint!
+  title: String!
+  writtenBy: String!
+  createAt: Timestamp!
 }
 
 type HomepageDetailType {
-  ID: Uint!
-  Title: String!
-  WrittenBy: String!
-  CreateAt: Timestamp!
-  Content: String!
-  Images: [String!]!
-  Files: [HomepageFileType!]!
+  id: Uint!
+  title: String!
+  writtenBy: String!
+  createAt: Timestamp!
+  content: String!
+  images: [String!]!
+  files: [HomepageFileType!]!
 }
 
 type HomepageFileType {
-  Name: String!
-  Download: String!
-  Preview: String!
+  name: String!
+  download: String!
+  preview: String!
 }
 
 type Query {
   myProfile: Profile @auth(getInfo: true)
   schoolMeal(filter: SchoolMealFilter): [SchoolMeal!]!
   post(id: ObjectID!, comment: CommentFilter): Post! @auth(getInfo: true)
-  posts(categoryID: ObjectID!, offset: Int, limit: Int): [Post!]!
-    @auth(getInfo: true)
+  posts(categoryID: ObjectID!, offset: Int, limit: Int): [Post!]! @auth(getInfo: true)
   categories: [Category!]! @auth
 
   calendar(filter: CalendarFilter!): [Calendar!]!
@@ -302,7 +312,7 @@ type Mutation {
   createPost(input: NewPost!): ObjectID! @auth
   likePost(input: LikePostInput!): Nothing @auth
   addComment(input: NewComment!): ObjectID! @auth
-  deleteComment(postid: ObjectID!, commentid: ObjectID!): Nothing! @auth
+  deleteComment(postID: ObjectID!, commentID: ObjectID!): Nothing! @auth
 
   addCalendar(input: NewCalendar!): ObjectID! @auth(reqPermission: ["calendar"])
   deleteCalendar(target: ObjectID!): Nothing! @auth(reqPermission: ["calendar"])

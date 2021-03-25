@@ -36,6 +36,7 @@ type CalendarFilter struct {
 type Category struct {
 	ID            ObjectID   `json:"id"`
 	Name          string     `json:"name"`
+	Description   string     `json:"description"`
 	ReqPermission []string   `json:"reqPermission"`
 	AnonAble      bool       `json:"anonAble"`
 	ReadAbleRole  []UserRole `json:"readAbleRole"`
@@ -43,11 +44,12 @@ type Category struct {
 }
 
 type Comment struct {
-	ID       ObjectID  `json:"id"`
-	Author   *Profile  `json:"author"`
-	Content  string    `json:"content"`
-	CreateAt Timestamp `json:"createAt"`
-	UpdateAt Timestamp `json:"updateAt"`
+	ID       ObjectID   `json:"id"`
+	Author   *Profile   `json:"author"`
+	Content  string     `json:"content"`
+	CreateAt Timestamp  `json:"createAt"`
+	UpdateAt Timestamp  `json:"updateAt"`
+	Status   PostStatus `json:"status"`
 }
 
 type CommentFilter struct {
@@ -72,19 +74,19 @@ type HomepageDetailFilter struct {
 }
 
 type HomepageDetailType struct {
-	ID        uint                `json:"ID"`
-	Title     string              `json:"Title"`
-	WrittenBy string              `json:"WrittenBy"`
-	CreateAt  Timestamp           `json:"CreateAt"`
-	Content   string              `json:"Content"`
-	Images    []string            `json:"Images"`
-	Files     []*HomepageFileType `json:"Files"`
+	ID        uint                `json:"id"`
+	Title     string              `json:"title"`
+	WrittenBy string              `json:"writtenBy"`
+	CreateAt  Timestamp           `json:"createAt"`
+	Content   string              `json:"content"`
+	Images    []string            `json:"images"`
+	Files     []*HomepageFileType `json:"files"`
 }
 
 type HomepageFileType struct {
-	Name     string `json:"Name"`
-	Download string `json:"Download"`
-	Preview  string `json:"Preview"`
+	Name     string `json:"name"`
+	Download string `json:"download"`
+	Preview  string `json:"preview"`
 }
 
 type HomepageListFilter struct {
@@ -93,11 +95,11 @@ type HomepageListFilter struct {
 }
 
 type HomepageListType struct {
-	ID        uint      `json:"ID"`
-	Number    uint      `json:"Number"`
-	Title     string    `json:"Title"`
-	WrittenBy string    `json:"WrittenBy"`
-	CreateAt  Timestamp `json:"CreateAt"`
+	ID        uint      `json:"id"`
+	Number    uint      `json:"number"`
+	Title     string    `json:"title"`
+	WrittenBy string    `json:"writtenBy"`
+	CreateAt  Timestamp `json:"createAt"`
 }
 
 type LikePostInput struct {
@@ -116,6 +118,7 @@ type NewCalendar struct {
 
 type NewCategory struct {
 	Name          string     `json:"name"`
+	Description   string     `json:"description"`
 	ReqPermission []string   `json:"reqPermission"`
 	AnonAble      bool       `json:"anonAble"`
 	ReadAbleRole  []UserRole `json:"readAbleRole"`
@@ -158,6 +161,7 @@ type Post struct {
 	CreateAt Timestamp  `json:"createAt"`
 	UpdateAt Timestamp  `json:"updateAt"`
 	Comment  []*Comment `json:"comment"`
+	Status   PostStatus `json:"status"`
 }
 
 type Profile struct {
@@ -167,6 +171,7 @@ type Profile struct {
 	Phone    *Phone        `json:"phone"`
 	Detail   ProfileDetail `json:"detail"`
 	Status   UserStatus    `json:"status"`
+	Role     UserRole      `json:"role"`
 }
 
 type ProfileWithToken struct {
@@ -300,6 +305,49 @@ func (e *HomepageBoard) UnmarshalGQL(v interface{}) error {
 }
 
 func (e HomepageBoard) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type PostStatus string
+
+const (
+	PostStatusNormal   PostStatus = "Normal"
+	PostStatusDeleted  PostStatus = "Deleted"
+	PostStatusReported PostStatus = "Reported"
+)
+
+var AllPostStatus = []PostStatus{
+	PostStatusNormal,
+	PostStatusDeleted,
+	PostStatusReported,
+}
+
+func (e PostStatus) IsValid() bool {
+	switch e {
+	case PostStatusNormal, PostStatusDeleted, PostStatusReported:
+		return true
+	}
+	return false
+}
+
+func (e PostStatus) String() string {
+	return string(e)
+}
+
+func (e *PostStatus) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = PostStatus(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid PostStatus", str)
+	}
+	return nil
+}
+
+func (e PostStatus) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 

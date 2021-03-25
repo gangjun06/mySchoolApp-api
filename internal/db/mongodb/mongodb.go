@@ -31,10 +31,12 @@ func Init() {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	if err := client.Connect(ctx); err != nil {
+		log.Println("error connect mongodb")
 		log.Fatal(err)
 	}
 
 	if err := client.Ping(ctx, readpref.Primary()); err != nil {
+		log.Println("error connect mongodb")
 		log.Fatal(err)
 	}
 

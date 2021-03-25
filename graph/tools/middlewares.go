@@ -3,6 +3,7 @@ package tools
 import (
 	"context"
 	"net/http"
+	"strings"
 )
 
 func Middleware(next http.Handler) http.Handler {
@@ -29,5 +30,5 @@ func getRealIP(r *http.Request) string {
 	if IPAddress == "" {
 		IPAddress = r.RemoteAddr
 	}
-	return IPAddress
+	return strings.Split(IPAddress, ":")[0]
 }

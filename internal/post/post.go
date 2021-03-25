@@ -3,6 +3,7 @@ package post
 import (
 	"time"
 
+	"github.com/osang-school/backend/graph/model"
 	"github.com/osang-school/backend/graph/myerr"
 	"github.com/osang-school/backend/internal/db/mongodb"
 	"github.com/osang-school/backend/internal/user"
@@ -17,6 +18,7 @@ type (
 	Category struct {
 		ID                  primitive.ObjectID `bson:"_id,omitempty"`
 		Name                string             `bson:"name,omitempty"`
+		Description         string             `bson:"description,omitempty"`
 		ReqPermission       []string           `bson:"reqPermission,omitempty"`
 		ReqManagePermission []string           `bson:"reqManagePermission,omitempty"`
 		AnonAble            bool               `bson:"anonAble,omitempty"`
@@ -180,6 +182,7 @@ func NewPost(categoryID, author primitive.ObjectID, title, content string, anon 
 func GetPosts(categoryID primitive.ObjectID, offset, limit int) ([]*Post, error) {
 	pipeline := mongo.Pipeline{
 		bson.D{{"$match", bson.M{"category": categoryID}}},
+		bson.D{{"$sort", bson.M{"_id": -1}}},
 		bson.D{{"$skip", offset}},
 		bson.D{{"$limit", limit}},
 		bson.D{{"$lookup", bson.D{{"from", "category"}, {"localField", "category"}, {"foreignField", "_id"}, {"as", "categoryData"}}}},
@@ -265,14 +268,14 @@ func GetPost(id, userID primitive.ObjectID, loadPost bool, comment ...int) (*Pos
 			bson.D{{"$set", bson.M{
 				"likeCnt": bson.M{
 					"$cond": bson.M{
-						"if":   bson.M{"$eq": bson.A{"$likeUsers", nil}},
+						"if":   bson.M{"$eq": bson.A{bson.M{"$type": "$likeUsers"}, "missing"}},
 						"then": 0,
 						"else": bson.M{"$size": "$likeUsers"},
 					},
 				},
 				"isLike": bson.M{
 					"$cond": bson.M{
-						"if":   bson.M{"$eq": bson.A{"$likeUsers", nil}},
+						"if":   bson.M{"$eq": bson.A{bson.M{"$type": "$likeUsers"}, "missing"}},
 						"then": false,
 						"else": bson.M{"$in": bson.A{userID, "$likeUsers"}},
 					},
@@ -368,4 +371,16 @@ func DeleteComment(postID, commentID primitive.ObjectID) error {
 		return myerr.New(myerr.ErrServer, err.Error())
 	}
 	return nil
+}
+
+func StatusToGqlType(status PostStatus) model.PostStatus {
+	switch status {
+	case StatusNormal:
+		return model.PostStatusNormal
+	case StatusReported:
+		return model.PostStatusReported
+	case StatusDeleted:
+		return model.PostStatusDeleted
+	}
+	return model.PostStatusDeleted
 }

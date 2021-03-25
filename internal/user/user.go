@@ -248,21 +248,25 @@ func UserToGqlType(u *User) *model.Profile {
 	}
 	switch u.Role {
 	case RoleStudent:
+		profile.Role = model.UserRoleStudent
 		profile.Detail = model.StudentProfile{
 			Grade:  u.Student.Grade,
 			Class:  u.Student.Class,
 			Number: u.Student.Number,
 		}
 	case RoleOfficials:
+		profile.Role = model.UserRoleOfficials
 		profile.Detail = model.OfficialsProfile{
 			Role:        u.Officials.Role,
 			Description: u.Officials.Description,
 		}
 	case RoleTeacher:
+		profile.Role = model.UserRoleTeacher
 		profile.Detail = model.TeacherProfile{
 			Subject: u.Teacher.Subject,
 		}
 	case RoleAnon:
+		profile.Role = model.UserRoleStudent
 		profile.Detail = model.AnonProfile{}
 	}
 	return profile

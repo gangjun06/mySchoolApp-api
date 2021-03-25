@@ -174,6 +174,7 @@ func (r *mutationResolver) CreateCategory(ctx context.Context, input model.NewCa
 		Name:          input.Name,
 		ReqPermission: input.ReqPermission,
 		AnonAble:      input.AnonAble,
+		Description:   input.Description,
 	}
 	for _, v := range input.ReadAbleRole {
 		category.ReadAbleRole = append(category.ReadAbleRole, convert(v))
@@ -238,8 +239,8 @@ func (r *mutationResolver) AddComment(ctx context.Context, input model.NewCommen
 	return model.ObjectID(id), err
 }
 
-func (r *mutationResolver) DeleteComment(ctx context.Context, postid model.ObjectID, commentid model.ObjectID) (string, error) {
-	return "", post.DeleteComment(primitive.ObjectID(postid), primitive.ObjectID(commentid))
+func (r *mutationResolver) DeleteComment(ctx context.Context, postID model.ObjectID, commentID model.ObjectID) (string, error) {
+	return "", post.DeleteComment(primitive.ObjectID(postID), primitive.ObjectID(commentID))
 }
 
 func (r *mutationResolver) AddCalendar(ctx context.Context, input model.NewCalendar) (model.ObjectID, error) {
@@ -327,8 +328,8 @@ func (r *queryResolver) Post(ctx context.Context, id model.ObjectID, comment *mo
 	offset := 0
 	limit := 20
 	if comment != nil {
-		if *comment.LoadOnlyComment {
-			loadPost = false
+		if comment.LoadOnlyComment != nil {
+			loadPost = !*comment.LoadOnlyComment
 		}
 		if comment.Offset != nil {
 			offset = *comment.Offset
@@ -350,6 +351,7 @@ func (r *queryResolver) Post(ctx context.Context, id model.ObjectID, comment *mo
 			Content:  v.Content,
 			CreateAt: model.Timestamp(v.CreateAt),
 			UpdateAt: model.Timestamp(v.UpdateAt),
+			Status:   post.StatusToGqlType(v.Status),
 		})
 	}
 	likeCnt := data.LikeCnt
@@ -373,6 +375,7 @@ func (r *queryResolver) Post(ctx context.Context, id model.ObjectID, comment *mo
 		CreateAt: model.Timestamp(data.CreateAt),
 		UpdateAt: model.Timestamp(data.UpdateAt),
 		Comment:  resultComment,
+		Status:   post.StatusToGqlType(data.Status),
 	}, nil
 }
 
@@ -427,6 +430,7 @@ func (r *queryResolver) Categories(ctx context.Context) ([]*model.Category, erro
 		result = append(result, &model.Category{
 			ID:            model.ObjectID(d.ID),
 			Name:          d.Name,
+			Description:   d.Description,
 			ReqPermission: d.ReqPermission,
 			AnonAble:      d.AnonAble,
 			WriteAbleRole: user.RoleListToGql(d.WriteAbleRole),

@@ -61,6 +61,7 @@ type ComplexityRoot struct {
 
 	Category struct {
 		AnonAble      func(childComplexity int) int
+		Description   func(childComplexity int) int
 		ID            func(childComplexity int) int
 		Name          func(childComplexity int) int
 		ReadAbleRole  func(childComplexity int) int
@@ -73,6 +74,7 @@ type ComplexityRoot struct {
 		Content  func(childComplexity int) int
 		CreateAt func(childComplexity int) int
 		ID       func(childComplexity int) int
+		Status   func(childComplexity int) int
 		UpdateAt func(childComplexity int) int
 	}
 
@@ -112,7 +114,7 @@ type ComplexityRoot struct {
 		CreateCategory       func(childComplexity int, input model.NewCategory) int
 		CreatePost           func(childComplexity int, input model.NewPost) int
 		DeleteCalendar       func(childComplexity int, target model.ObjectID) int
-		DeleteComment        func(childComplexity int, postid model.ObjectID, commentid model.ObjectID) int
+		DeleteComment        func(childComplexity int, postID model.ObjectID, commentID model.ObjectID) int
 		DeleteEmailAliases   func(childComplexity int) int
 		DeleteSchedule       func(childComplexity int, target model.ScheduleDelFilter) int
 		LikePost             func(childComplexity int, input model.LikePostInput) int
@@ -139,6 +141,7 @@ type ComplexityRoot struct {
 		ID       func(childComplexity int) int
 		IsLike   func(childComplexity int) int
 		Like     func(childComplexity int) int
+		Status   func(childComplexity int) int
 		Title    func(childComplexity int) int
 		UpdateAt func(childComplexity int) int
 	}
@@ -149,6 +152,7 @@ type ComplexityRoot struct {
 		Name     func(childComplexity int) int
 		Nickname func(childComplexity int) int
 		Phone    func(childComplexity int) int
+		Role     func(childComplexity int) int
 		Status   func(childComplexity int) int
 	}
 
@@ -212,7 +216,7 @@ type MutationResolver interface {
 	CreatePost(ctx context.Context, input model.NewPost) (model.ObjectID, error)
 	LikePost(ctx context.Context, input model.LikePostInput) (*string, error)
 	AddComment(ctx context.Context, input model.NewComment) (model.ObjectID, error)
-	DeleteComment(ctx context.Context, postid model.ObjectID, commentid model.ObjectID) (string, error)
+	DeleteComment(ctx context.Context, postID model.ObjectID, commentID model.ObjectID) (string, error)
 	AddCalendar(ctx context.Context, input model.NewCalendar) (model.ObjectID, error)
 	DeleteCalendar(ctx context.Context, target model.ObjectID) (string, error)
 	UpdateSchedule(ctx context.Context, input model.UpdateSchedule) (string, error)
@@ -311,6 +315,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Category.AnonAble(childComplexity), true
 
+	case "Category.description":
+		if e.complexity.Category.Description == nil {
+			break
+		}
+
+		return e.complexity.Category.Description(childComplexity), true
+
 	case "Category.id":
 		if e.complexity.Category.ID == nil {
 			break
@@ -374,6 +385,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Comment.ID(childComplexity), true
 
+	case "Comment.status":
+		if e.complexity.Comment.Status == nil {
+			break
+		}
+
+		return e.complexity.Comment.Status(childComplexity), true
+
 	case "Comment.updateAt":
 		if e.complexity.Comment.UpdateAt == nil {
 			break
@@ -395,105 +413,105 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.EmailAliases.To(childComplexity), true
 
-	case "HomepageDetailType.Content":
+	case "HomepageDetailType.content":
 		if e.complexity.HomepageDetailType.Content == nil {
 			break
 		}
 
 		return e.complexity.HomepageDetailType.Content(childComplexity), true
 
-	case "HomepageDetailType.CreateAt":
+	case "HomepageDetailType.createAt":
 		if e.complexity.HomepageDetailType.CreateAt == nil {
 			break
 		}
 
 		return e.complexity.HomepageDetailType.CreateAt(childComplexity), true
 
-	case "HomepageDetailType.Files":
+	case "HomepageDetailType.files":
 		if e.complexity.HomepageDetailType.Files == nil {
 			break
 		}
 
 		return e.complexity.HomepageDetailType.Files(childComplexity), true
 
-	case "HomepageDetailType.ID":
+	case "HomepageDetailType.id":
 		if e.complexity.HomepageDetailType.ID == nil {
 			break
 		}
 
 		return e.complexity.HomepageDetailType.ID(childComplexity), true
 
-	case "HomepageDetailType.Images":
+	case "HomepageDetailType.images":
 		if e.complexity.HomepageDetailType.Images == nil {
 			break
 		}
 
 		return e.complexity.HomepageDetailType.Images(childComplexity), true
 
-	case "HomepageDetailType.Title":
+	case "HomepageDetailType.title":
 		if e.complexity.HomepageDetailType.Title == nil {
 			break
 		}
 
 		return e.complexity.HomepageDetailType.Title(childComplexity), true
 
-	case "HomepageDetailType.WrittenBy":
+	case "HomepageDetailType.writtenBy":
 		if e.complexity.HomepageDetailType.WrittenBy == nil {
 			break
 		}
 
 		return e.complexity.HomepageDetailType.WrittenBy(childComplexity), true
 
-	case "HomepageFileType.Download":
+	case "HomepageFileType.download":
 		if e.complexity.HomepageFileType.Download == nil {
 			break
 		}
 
 		return e.complexity.HomepageFileType.Download(childComplexity), true
 
-	case "HomepageFileType.Name":
+	case "HomepageFileType.name":
 		if e.complexity.HomepageFileType.Name == nil {
 			break
 		}
 
 		return e.complexity.HomepageFileType.Name(childComplexity), true
 
-	case "HomepageFileType.Preview":
+	case "HomepageFileType.preview":
 		if e.complexity.HomepageFileType.Preview == nil {
 			break
 		}
 
 		return e.complexity.HomepageFileType.Preview(childComplexity), true
 
-	case "HomepageListType.CreateAt":
+	case "HomepageListType.createAt":
 		if e.complexity.HomepageListType.CreateAt == nil {
 			break
 		}
 
 		return e.complexity.HomepageListType.CreateAt(childComplexity), true
 
-	case "HomepageListType.ID":
+	case "HomepageListType.id":
 		if e.complexity.HomepageListType.ID == nil {
 			break
 		}
 
 		return e.complexity.HomepageListType.ID(childComplexity), true
 
-	case "HomepageListType.Number":
+	case "HomepageListType.number":
 		if e.complexity.HomepageListType.Number == nil {
 			break
 		}
 
 		return e.complexity.HomepageListType.Number(childComplexity), true
 
-	case "HomepageListType.Title":
+	case "HomepageListType.title":
 		if e.complexity.HomepageListType.Title == nil {
 			break
 		}
 
 		return e.complexity.HomepageListType.Title(childComplexity), true
 
-	case "HomepageListType.WrittenBy":
+	case "HomepageListType.writtenBy":
 		if e.complexity.HomepageListType.WrittenBy == nil {
 			break
 		}
@@ -582,7 +600,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.DeleteComment(childComplexity, args["postid"].(model.ObjectID), args["commentid"].(model.ObjectID)), true
+		return e.complexity.Mutation.DeleteComment(childComplexity, args["postID"].(model.ObjectID), args["commentID"].(model.ObjectID)), true
 
 	case "Mutation.deleteEmailAliases":
 		if e.complexity.Mutation.DeleteEmailAliases == nil {
@@ -764,6 +782,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Post.Like(childComplexity), true
 
+	case "Post.status":
+		if e.complexity.Post.Status == nil {
+			break
+		}
+
+		return e.complexity.Post.Status(childComplexity), true
+
 	case "Post.title":
 		if e.complexity.Post.Title == nil {
 			break
@@ -812,6 +837,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Profile.Phone(childComplexity), true
+
+	case "Profile.role":
+		if e.complexity.Profile.Role == nil {
+			break
+		}
+
+		return e.complexity.Profile.Role(childComplexity), true
 
 	case "Profile.status":
 		if e.complexity.Profile.Status == nil {
@@ -1151,6 +1183,12 @@ enum UserRole {
   Officials
 }
 
+enum PostStatus {
+  Normal
+  Deleted
+  Reported
+}
+
 type Profile {
   id: ObjectID!
   name: String!
@@ -1158,6 +1196,7 @@ type Profile {
   phone: Phone
   detail: ProfileDetail!
   status: UserStatus!
+  role: UserRole!
 }
 
 type StudentProfile {
@@ -1238,6 +1277,7 @@ type Post {
   createAt: Timestamp!
   updateAt: Timestamp!
   comment: [Comment!]
+  status: PostStatus!
 }
 
 type Comment {
@@ -1246,10 +1286,12 @@ type Comment {
   content: String!
   createAt: Timestamp!
   updateAt: Timestamp!
+  status: PostStatus!
 }
 
 input NewCategory {
   name: String!
+  description: String!
   reqPermission: [String!]!
   anonAble: Boolean!
   readAbleRole: [UserRole!]!
@@ -1259,6 +1301,7 @@ input NewCategory {
 type Category {
   id: ObjectID!
   name: String!
+  description: String!
   reqPermission: [String!]!
   anonAble: Boolean!
   readAbleRole: [UserRole!]!
@@ -1377,35 +1420,34 @@ input HomepageDetailFilter {
 }
 
 type HomepageListType {
-  ID: Uint!
-  Number: Uint!
-  Title: String!
-  WrittenBy: String!
-  CreateAt: Timestamp!
+  id: Uint!
+  number: Uint!
+  title: String!
+  writtenBy: String!
+  createAt: Timestamp!
 }
 
 type HomepageDetailType {
-  ID: Uint!
-  Title: String!
-  WrittenBy: String!
-  CreateAt: Timestamp!
-  Content: String!
-  Images: [String!]!
-  Files: [HomepageFileType!]!
+  id: Uint!
+  title: String!
+  writtenBy: String!
+  createAt: Timestamp!
+  content: String!
+  images: [String!]!
+  files: [HomepageFileType!]!
 }
 
 type HomepageFileType {
-  Name: String!
-  Download: String!
-  Preview: String!
+  name: String!
+  download: String!
+  preview: String!
 }
 
 type Query {
   myProfile: Profile @auth(getInfo: true)
   schoolMeal(filter: SchoolMealFilter): [SchoolMeal!]!
   post(id: ObjectID!, comment: CommentFilter): Post! @auth(getInfo: true)
-  posts(categoryID: ObjectID!, offset: Int, limit: Int): [Post!]!
-    @auth(getInfo: true)
+  posts(categoryID: ObjectID!, offset: Int, limit: Int): [Post!]! @auth(getInfo: true)
   categories: [Category!]! @auth
 
   calendar(filter: CalendarFilter!): [Calendar!]!
@@ -1433,7 +1475,7 @@ type Mutation {
   createPost(input: NewPost!): ObjectID! @auth
   likePost(input: LikePostInput!): Nothing @auth
   addComment(input: NewComment!): ObjectID! @auth
-  deleteComment(postid: ObjectID!, commentid: ObjectID!): Nothing! @auth
+  deleteComment(postID: ObjectID!, commentID: ObjectID!): Nothing! @auth
 
   addCalendar(input: NewCalendar!): ObjectID! @auth(reqPermission: ["calendar"])
   deleteCalendar(target: ObjectID!): Nothing! @auth(reqPermission: ["calendar"])
@@ -1591,23 +1633,23 @@ func (ec *executionContext) field_Mutation_deleteComment_args(ctx context.Contex
 	var err error
 	args := map[string]interface{}{}
 	var arg0 model.ObjectID
-	if tmp, ok := rawArgs["postid"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("postid"))
+	if tmp, ok := rawArgs["postID"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("postID"))
 		arg0, err = ec.unmarshalNObjectID2githubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐObjectID(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["postid"] = arg0
+	args["postID"] = arg0
 	var arg1 model.ObjectID
-	if tmp, ok := rawArgs["commentid"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("commentid"))
+	if tmp, ok := rawArgs["commentID"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("commentID"))
 		arg1, err = ec.unmarshalNObjectID2githubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐObjectID(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["commentid"] = arg1
+	args["commentID"] = arg1
 	return args, nil
 }
 
@@ -2290,6 +2332,41 @@ func (ec *executionContext) _Category_name(ctx context.Context, field graphql.Co
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Category_description(ctx context.Context, field graphql.CollectedField, obj *model.Category) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Category",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Description, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Category_reqPermission(ctx context.Context, field graphql.CollectedField, obj *model.Category) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -2605,6 +2682,41 @@ func (ec *executionContext) _Comment_updateAt(ctx context.Context, field graphql
 	return ec.marshalNTimestamp2githubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐTimestamp(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Comment_status(ctx context.Context, field graphql.CollectedField, obj *model.Comment) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Comment",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Status, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(model.PostStatus)
+	fc.Result = res
+	return ec.marshalNPostStatus2githubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐPostStatus(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _EmailAliases_from(ctx context.Context, field graphql.CollectedField, obj *model.EmailAliases) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -2675,7 +2787,7 @@ func (ec *executionContext) _EmailAliases_to(ctx context.Context, field graphql.
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _HomepageDetailType_ID(ctx context.Context, field graphql.CollectedField, obj *model.HomepageDetailType) (ret graphql.Marshaler) {
+func (ec *executionContext) _HomepageDetailType_id(ctx context.Context, field graphql.CollectedField, obj *model.HomepageDetailType) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -2710,7 +2822,7 @@ func (ec *executionContext) _HomepageDetailType_ID(ctx context.Context, field gr
 	return ec.marshalNUint2uint(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _HomepageDetailType_Title(ctx context.Context, field graphql.CollectedField, obj *model.HomepageDetailType) (ret graphql.Marshaler) {
+func (ec *executionContext) _HomepageDetailType_title(ctx context.Context, field graphql.CollectedField, obj *model.HomepageDetailType) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -2745,7 +2857,7 @@ func (ec *executionContext) _HomepageDetailType_Title(ctx context.Context, field
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _HomepageDetailType_WrittenBy(ctx context.Context, field graphql.CollectedField, obj *model.HomepageDetailType) (ret graphql.Marshaler) {
+func (ec *executionContext) _HomepageDetailType_writtenBy(ctx context.Context, field graphql.CollectedField, obj *model.HomepageDetailType) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -2780,7 +2892,7 @@ func (ec *executionContext) _HomepageDetailType_WrittenBy(ctx context.Context, f
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _HomepageDetailType_CreateAt(ctx context.Context, field graphql.CollectedField, obj *model.HomepageDetailType) (ret graphql.Marshaler) {
+func (ec *executionContext) _HomepageDetailType_createAt(ctx context.Context, field graphql.CollectedField, obj *model.HomepageDetailType) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -2815,7 +2927,7 @@ func (ec *executionContext) _HomepageDetailType_CreateAt(ctx context.Context, fi
 	return ec.marshalNTimestamp2githubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐTimestamp(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _HomepageDetailType_Content(ctx context.Context, field graphql.CollectedField, obj *model.HomepageDetailType) (ret graphql.Marshaler) {
+func (ec *executionContext) _HomepageDetailType_content(ctx context.Context, field graphql.CollectedField, obj *model.HomepageDetailType) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -2850,7 +2962,7 @@ func (ec *executionContext) _HomepageDetailType_Content(ctx context.Context, fie
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _HomepageDetailType_Images(ctx context.Context, field graphql.CollectedField, obj *model.HomepageDetailType) (ret graphql.Marshaler) {
+func (ec *executionContext) _HomepageDetailType_images(ctx context.Context, field graphql.CollectedField, obj *model.HomepageDetailType) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -2885,7 +2997,7 @@ func (ec *executionContext) _HomepageDetailType_Images(ctx context.Context, fiel
 	return ec.marshalNString2ᚕstringᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _HomepageDetailType_Files(ctx context.Context, field graphql.CollectedField, obj *model.HomepageDetailType) (ret graphql.Marshaler) {
+func (ec *executionContext) _HomepageDetailType_files(ctx context.Context, field graphql.CollectedField, obj *model.HomepageDetailType) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -2920,7 +3032,7 @@ func (ec *executionContext) _HomepageDetailType_Files(ctx context.Context, field
 	return ec.marshalNHomepageFileType2ᚕᚖgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐHomepageFileTypeᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _HomepageFileType_Name(ctx context.Context, field graphql.CollectedField, obj *model.HomepageFileType) (ret graphql.Marshaler) {
+func (ec *executionContext) _HomepageFileType_name(ctx context.Context, field graphql.CollectedField, obj *model.HomepageFileType) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -2955,7 +3067,7 @@ func (ec *executionContext) _HomepageFileType_Name(ctx context.Context, field gr
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _HomepageFileType_Download(ctx context.Context, field graphql.CollectedField, obj *model.HomepageFileType) (ret graphql.Marshaler) {
+func (ec *executionContext) _HomepageFileType_download(ctx context.Context, field graphql.CollectedField, obj *model.HomepageFileType) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -2990,7 +3102,7 @@ func (ec *executionContext) _HomepageFileType_Download(ctx context.Context, fiel
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _HomepageFileType_Preview(ctx context.Context, field graphql.CollectedField, obj *model.HomepageFileType) (ret graphql.Marshaler) {
+func (ec *executionContext) _HomepageFileType_preview(ctx context.Context, field graphql.CollectedField, obj *model.HomepageFileType) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -3025,7 +3137,7 @@ func (ec *executionContext) _HomepageFileType_Preview(ctx context.Context, field
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _HomepageListType_ID(ctx context.Context, field graphql.CollectedField, obj *model.HomepageListType) (ret graphql.Marshaler) {
+func (ec *executionContext) _HomepageListType_id(ctx context.Context, field graphql.CollectedField, obj *model.HomepageListType) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -3060,7 +3172,7 @@ func (ec *executionContext) _HomepageListType_ID(ctx context.Context, field grap
 	return ec.marshalNUint2uint(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _HomepageListType_Number(ctx context.Context, field graphql.CollectedField, obj *model.HomepageListType) (ret graphql.Marshaler) {
+func (ec *executionContext) _HomepageListType_number(ctx context.Context, field graphql.CollectedField, obj *model.HomepageListType) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -3095,7 +3207,7 @@ func (ec *executionContext) _HomepageListType_Number(ctx context.Context, field 
 	return ec.marshalNUint2uint(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _HomepageListType_Title(ctx context.Context, field graphql.CollectedField, obj *model.HomepageListType) (ret graphql.Marshaler) {
+func (ec *executionContext) _HomepageListType_title(ctx context.Context, field graphql.CollectedField, obj *model.HomepageListType) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -3130,7 +3242,7 @@ func (ec *executionContext) _HomepageListType_Title(ctx context.Context, field g
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _HomepageListType_WrittenBy(ctx context.Context, field graphql.CollectedField, obj *model.HomepageListType) (ret graphql.Marshaler) {
+func (ec *executionContext) _HomepageListType_writtenBy(ctx context.Context, field graphql.CollectedField, obj *model.HomepageListType) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -3165,7 +3277,7 @@ func (ec *executionContext) _HomepageListType_WrittenBy(ctx context.Context, fie
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _HomepageListType_CreateAt(ctx context.Context, field graphql.CollectedField, obj *model.HomepageListType) (ret graphql.Marshaler) {
+func (ec *executionContext) _HomepageListType_createAt(ctx context.Context, field graphql.CollectedField, obj *model.HomepageListType) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -3737,7 +3849,7 @@ func (ec *executionContext) _Mutation_deleteComment(ctx context.Context, field g
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().DeleteComment(rctx, args["postid"].(model.ObjectID), args["commentid"].(model.ObjectID))
+			return ec.resolvers.Mutation().DeleteComment(rctx, args["postID"].(model.ObjectID), args["commentID"].(model.ObjectID))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.Auth == nil {
@@ -4570,6 +4682,41 @@ func (ec *executionContext) _Post_comment(ctx context.Context, field graphql.Col
 	return ec.marshalOComment2ᚕᚖgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐCommentᚄ(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Post_status(ctx context.Context, field graphql.CollectedField, obj *model.Post) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Post",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Status, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(model.PostStatus)
+	fc.Result = res
+	return ec.marshalNPostStatus2githubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐPostStatus(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Profile_id(ctx context.Context, field graphql.CollectedField, obj *model.Profile) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -4775,6 +4922,41 @@ func (ec *executionContext) _Profile_status(ctx context.Context, field graphql.C
 	res := resTmp.(model.UserStatus)
 	fc.Result = res
 	return ec.marshalNUserStatus2githubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐUserStatus(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Profile_role(ctx context.Context, field graphql.CollectedField, obj *model.Profile) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Profile",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Role, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(model.UserRole)
+	fc.Result = res
+	return ec.marshalNUserRole2githubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐUserRole(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _ProfileWithToken_profile(ctx context.Context, field graphql.CollectedField, obj *model.ProfileWithToken) (ret graphql.Marshaler) {
@@ -7388,6 +7570,14 @@ func (ec *executionContext) unmarshalInputNewCategory(ctx context.Context, obj i
 			if err != nil {
 				return it, err
 			}
+		case "description":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			it.Description, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
 		case "reqPermission":
 			var err error
 
@@ -7981,6 +8171,11 @@ func (ec *executionContext) _Category(ctx context.Context, sel ast.SelectionSet,
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "description":
+			out.Values[i] = ec._Category_description(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "reqPermission":
 			out.Values[i] = ec._Category_reqPermission(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -8048,6 +8243,11 @@ func (ec *executionContext) _Comment(ctx context.Context, sel ast.SelectionSet, 
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "status":
+			out.Values[i] = ec._Comment_status(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -8102,38 +8302,38 @@ func (ec *executionContext) _HomepageDetailType(ctx context.Context, sel ast.Sel
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("HomepageDetailType")
-		case "ID":
-			out.Values[i] = ec._HomepageDetailType_ID(ctx, field, obj)
+		case "id":
+			out.Values[i] = ec._HomepageDetailType_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "Title":
-			out.Values[i] = ec._HomepageDetailType_Title(ctx, field, obj)
+		case "title":
+			out.Values[i] = ec._HomepageDetailType_title(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "WrittenBy":
-			out.Values[i] = ec._HomepageDetailType_WrittenBy(ctx, field, obj)
+		case "writtenBy":
+			out.Values[i] = ec._HomepageDetailType_writtenBy(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "CreateAt":
-			out.Values[i] = ec._HomepageDetailType_CreateAt(ctx, field, obj)
+		case "createAt":
+			out.Values[i] = ec._HomepageDetailType_createAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "Content":
-			out.Values[i] = ec._HomepageDetailType_Content(ctx, field, obj)
+		case "content":
+			out.Values[i] = ec._HomepageDetailType_content(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "Images":
-			out.Values[i] = ec._HomepageDetailType_Images(ctx, field, obj)
+		case "images":
+			out.Values[i] = ec._HomepageDetailType_images(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "Files":
-			out.Values[i] = ec._HomepageDetailType_Files(ctx, field, obj)
+		case "files":
+			out.Values[i] = ec._HomepageDetailType_files(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -8159,18 +8359,18 @@ func (ec *executionContext) _HomepageFileType(ctx context.Context, sel ast.Selec
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("HomepageFileType")
-		case "Name":
-			out.Values[i] = ec._HomepageFileType_Name(ctx, field, obj)
+		case "name":
+			out.Values[i] = ec._HomepageFileType_name(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "Download":
-			out.Values[i] = ec._HomepageFileType_Download(ctx, field, obj)
+		case "download":
+			out.Values[i] = ec._HomepageFileType_download(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "Preview":
-			out.Values[i] = ec._HomepageFileType_Preview(ctx, field, obj)
+		case "preview":
+			out.Values[i] = ec._HomepageFileType_preview(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -8196,28 +8396,28 @@ func (ec *executionContext) _HomepageListType(ctx context.Context, sel ast.Selec
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("HomepageListType")
-		case "ID":
-			out.Values[i] = ec._HomepageListType_ID(ctx, field, obj)
+		case "id":
+			out.Values[i] = ec._HomepageListType_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "Number":
-			out.Values[i] = ec._HomepageListType_Number(ctx, field, obj)
+		case "number":
+			out.Values[i] = ec._HomepageListType_number(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "Title":
-			out.Values[i] = ec._HomepageListType_Title(ctx, field, obj)
+		case "title":
+			out.Values[i] = ec._HomepageListType_title(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "WrittenBy":
-			out.Values[i] = ec._HomepageListType_WrittenBy(ctx, field, obj)
+		case "writtenBy":
+			out.Values[i] = ec._HomepageListType_writtenBy(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "CreateAt":
-			out.Values[i] = ec._HomepageListType_CreateAt(ctx, field, obj)
+		case "createAt":
+			out.Values[i] = ec._HomepageListType_createAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -8418,6 +8618,11 @@ func (ec *executionContext) _Post(ctx context.Context, sel ast.SelectionSet, obj
 			}
 		case "comment":
 			out.Values[i] = ec._Post_comment(ctx, field, obj)
+		case "status":
+			out.Values[i] = ec._Post_status(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -8464,6 +8669,11 @@ func (ec *executionContext) _Profile(ctx context.Context, sel ast.SelectionSet, 
 			}
 		case "status":
 			out.Values[i] = ec._Profile_status(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "role":
+			out.Values[i] = ec._Profile_role(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -9441,6 +9651,16 @@ func (ec *executionContext) marshalNPost2ᚖgithubᚗcomᚋosangᚑschoolᚋback
 		return graphql.Null
 	}
 	return ec._Post(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNPostStatus2githubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐPostStatus(ctx context.Context, v interface{}) (model.PostStatus, error) {
+	var res model.PostStatus
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNPostStatus2githubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐPostStatus(ctx context.Context, sel ast.SelectionSet, v model.PostStatus) graphql.Marshaler {
+	return v
 }
 
 func (ec *executionContext) marshalNProfile2ᚖgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐProfile(ctx context.Context, sel ast.SelectionSet, v *model.Profile) graphql.Marshaler {

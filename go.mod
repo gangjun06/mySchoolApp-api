@@ -19,7 +19,7 @@ require (
 	github.com/muesli/cache2go v0.0.0-20201208071950-e3e970b4892f
 	github.com/onsi/ginkgo v1.10.3 // indirect
 	github.com/onsi/gomega v1.7.1 // indirect
-	github.com/osang-school/data v0.0.0-20210308141502-a02f300338ed
+	github.com/osang-school/data v0.0.0-20210321130103-0dc59e4b9101 // indirect
 	github.com/stretchr/testify v1.7.0 // indirect
 	github.com/vektah/gqlparser/v2 v2.1.0
 	go.mongodb.org/mongo-driver v1.4.6
