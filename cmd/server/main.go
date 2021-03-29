@@ -19,6 +19,7 @@ import (
 	"github.com/osang-school/backend/internal/conf"
 	"github.com/osang-school/backend/internal/db/mongodb"
 	"github.com/osang-school/backend/internal/db/redis"
+	"github.com/osang-school/backend/internal/discord"
 	"github.com/osang-school/backend/internal/session"
 	"github.com/osang-school/backend/internal/user"
 	"github.com/vektah/gqlparser/v2/gqlerror"
@@ -83,6 +84,11 @@ func main() {
 		}
 		return err
 	})
+
+	if conf.Discord() != nil {
+		discord.Init()
+		defer discord.Close()
+	}
 
 	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
 	http.Handle("/query", gqltools.Middleware(srv))

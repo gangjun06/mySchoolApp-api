@@ -1,7 +1,9 @@
 package conf
 
 import (
+	"encoding/json"
 	"flag"
+	"io/ioutil"
 	"os"
 	"strconv"
 )
@@ -31,7 +33,18 @@ type Config struct {
 	}
 }
 
+type DiscordConf struct {
+	GroupID string `json"groupID"`
+	Token   string `json"token"`
+	SubPost []struct {
+		CategoryID       string `json:"categoryID"`
+		CategoryName     string `json:"categoryName"`
+		DiscordChannelID string `json:"discordChannelID"`
+	} `json"subpost"`
+}
+
 var conf *Config
+var confDiscord *DiscordConf
 
 func Init() {
 	conf = &Config{}
@@ -56,6 +69,13 @@ func Init() {
 	flag.StringVar(&conf.Email.Password, "mail_password", os.Getenv("EMAIL_PASSWORD"), "password")
 
 	flag.Parse()
+
+	file, err := ioutil.ReadFile("./discordConf.json")
+	if err != nil {
+		return
+	}
+	json.Unmarshal(file, &confDiscord)
+
 }
 
 func parseBool(str string) bool {
@@ -70,4 +90,8 @@ func parseInt(str string) int {
 
 func Get() *Config {
 	return conf
+}
+
+func Discord() *DiscordConf {
+	return confDiscord
 }

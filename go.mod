@@ -6,6 +6,7 @@ require (
 	github.com/99designs/gqlgen v0.13.0
 	github.com/andybalholm/cascadia v1.2.0 // indirect
 	github.com/aws/aws-sdk-go v1.37.25 // indirect
+	github.com/bwmarrin/discordgo v0.23.2 // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/go-redis/redis v6.15.9+incompatible
 	github.com/golang/protobuf v1.3.1 // indirect

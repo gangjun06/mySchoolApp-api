@@ -9,10 +9,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/bwmarrin/discordgo"
 	"github.com/muesli/cache2go"
 	"github.com/osang-school/backend/graph/generated"
 	"github.com/osang-school/backend/graph/model"
 	"github.com/osang-school/backend/graph/myerr"
+	"github.com/osang-school/backend/internal/conf"
+	"github.com/osang-school/backend/internal/discord"
 	"github.com/osang-school/backend/internal/info"
 	"github.com/osang-school/backend/internal/neis"
 	"github.com/osang-school/backend/internal/post"
@@ -72,11 +75,11 @@ func (r *mutationResolver) SetProfile(ctx context.Context, student *model.Studen
 		} else if exits {
 			return "", myerr.New(myerr.ErrDuplicate, "")
 		}
-		cache.Add(randomStr, time.Minute*1, student)
+		cache.Add(randomStr, time.Hour, student)
 	} else if teacher != nil {
-		cache.Add(randomStr, time.Minute*1, teacher)
+		cache.Add(randomStr, time.Hour, teacher)
 	} else if officials != nil {
-		cache.Add(randomStr, time.Minute*1, officials)
+		cache.Add(randomStr, time.Hour, officials)
 	} else {
 		return "", myerr.New(myerr.ErrBadRequest, "")
 	}
@@ -204,8 +207,24 @@ func (r *mutationResolver) CreatePost(ctx context.Context, input model.NewPost) 
 	if *input.Anon {
 		anon = true
 	}
-
 	id, err := post.NewPost(primitive.ObjectID(input.Category), user.ID, input.Title, input.Content, anon)
+
+	if conf.Discord() != nil {
+		for _, d := range conf.Discord().SubPost {
+			if primitive.ObjectID(input.Category).Hex() == d.CategoryID {
+				discord.SendEmbed(d.DiscordChannelID, &discordgo.MessageEmbed{
+					Title:       input.Title,
+					Description: input.Content,
+					Color:       0xbedbe9,
+					Footer: &discordgo.MessageEmbedFooter{
+						Text: d.CategoryName,
+					},
+					Timestamp: time.Now().Format(time.RFC3339),
+				})
+			}
+		}
+	}
+
 	return model.ObjectID(id), err
 }
 
@@ -343,6 +362,7 @@ func (r *queryResolver) Post(ctx context.Context, id model.ObjectID, comment *mo
 	if err != nil {
 		return nil, err
 	}
+
 	resultComment := []*model.Comment{}
 	for _, v := range data.Comment {
 		resultComment = append(resultComment, &model.Comment{
