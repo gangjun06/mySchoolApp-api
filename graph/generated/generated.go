@@ -117,6 +117,7 @@ type ComplexityRoot struct {
 		DeleteComment        func(childComplexity int, postID model.ObjectID, commentID model.ObjectID) int
 		DeleteEmailAliases   func(childComplexity int) int
 		DeleteSchedule       func(childComplexity int, target model.ScheduleDelFilter) int
+		InsertSchedule       func(childComplexity int, input []*model.UpdateSchedule) int
 		LikePost             func(childComplexity int, input model.LikePostInput) int
 		SetProfile           func(childComplexity int, student *model.StudentProfileInput, teacher *model.TeacherProfileInput, officials *model.OfficialsProfileInput) int
 		SignIn               func(childComplexity int, phone model.Phone, password string) int
@@ -219,6 +220,7 @@ type MutationResolver interface {
 	DeleteComment(ctx context.Context, postID model.ObjectID, commentID model.ObjectID) (string, error)
 	AddCalendar(ctx context.Context, input model.NewCalendar) (model.ObjectID, error)
 	DeleteCalendar(ctx context.Context, target model.ObjectID) (string, error)
+	InsertSchedule(ctx context.Context, input []*model.UpdateSchedule) (string, error)
 	UpdateSchedule(ctx context.Context, input model.UpdateSchedule) (string, error)
 	DeleteSchedule(ctx context.Context, target model.ScheduleDelFilter) (string, error)
 	UpdateEmailAliases(ctx context.Context, input model.EmailAliasesInput) (string, error)
@@ -620,6 +622,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.DeleteSchedule(childComplexity, args["target"].(model.ScheduleDelFilter)), true
+
+	case "Mutation.insertSchedule":
+		if e.complexity.Mutation.InsertSchedule == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_insertSchedule_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.InsertSchedule(childComplexity, args["input"].([]*model.UpdateSchedule)), true
 
 	case "Mutation.likePost":
 		if e.complexity.Mutation.LikePost == nil {
@@ -1447,7 +1461,8 @@ type Query {
   myProfile: Profile @auth(getInfo: true)
   schoolMeal(filter: SchoolMealFilter): [SchoolMeal!]!
   post(id: ObjectID!, comment: CommentFilter): Post! @auth(getInfo: true)
-  posts(categoryID: ObjectID!, offset: Int, limit: Int): [Post!]! @auth(getInfo: true)
+  posts(categoryID: ObjectID!, offset: Int, limit: Int): [Post!]!
+    @auth(getInfo: true)
   categories: [Category!]! @auth
 
   calendar(filter: CalendarFilter!): [Calendar!]!
@@ -1479,6 +1494,9 @@ type Mutation {
 
   addCalendar(input: NewCalendar!): ObjectID! @auth(reqPermission: ["calendar"])
   deleteCalendar(target: ObjectID!): Nothing! @auth(reqPermission: ["calendar"])
+
+  insertSchedule(input: [UpdateSchedule]!): Nothing!
+    @auth(reqPermission: ["schedule"])
 
   updateSchedule(input: UpdateSchedule!): Nothing!
     @auth(reqPermission: ["schedule"])
@@ -1665,6 +1683,21 @@ func (ec *executionContext) field_Mutation_deleteSchedule_args(ctx context.Conte
 		}
 	}
 	args["target"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_insertSchedule_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 []*model.UpdateSchedule
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNUpdateSchedule2ᚕᚖgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐUpdateSchedule(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
 	return args, nil
 }
 
@@ -3981,6 +4014,72 @@ func (ec *executionContext) _Mutation_deleteCalendar(ctx context.Context, field 
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			reqPermission, err := ec.unmarshalOPermission2ᚕstringᚄ(ctx, []interface{}{"calendar"})
+			if err != nil {
+				return nil, err
+			}
+			if ec.directives.Auth == nil {
+				return nil, errors.New("directive auth is not implemented")
+			}
+			return ec.directives.Auth(ctx, nil, directive0, nil, reqPermission)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(string); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be string`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNNothing2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_insertSchedule(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_insertSchedule_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().InsertSchedule(rctx, args["input"].([]*model.UpdateSchedule))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			reqPermission, err := ec.unmarshalOPermission2ᚕstringᚄ(ctx, []interface{}{"schedule"})
 			if err != nil {
 				return nil, err
 			}
@@ -8506,6 +8605,11 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "insertSchedule":
+			out.Values[i] = ec._Mutation_insertSchedule(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "updateSchedule":
 			out.Values[i] = ec._Mutation_updateSchedule(ctx, field)
 			if out.Values[i] == graphql.Null {
@@ -9921,6 +10025,27 @@ func (ec *executionContext) unmarshalNUpdateSchedule2githubᚗcomᚋosangᚑscho
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) unmarshalNUpdateSchedule2ᚕᚖgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐUpdateSchedule(ctx context.Context, v interface{}) ([]*model.UpdateSchedule, error) {
+	var vSlice []interface{}
+	if v != nil {
+		if tmp1, ok := v.([]interface{}); ok {
+			vSlice = tmp1
+		} else {
+			vSlice = []interface{}{v}
+		}
+	}
+	var err error
+	res := make([]*model.UpdateSchedule, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalOUpdateSchedule2ᚖgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐUpdateSchedule(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
 func (ec *executionContext) unmarshalNUserRole2githubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐUserRole(ctx context.Context, v interface{}) (model.UserRole, error) {
 	var res model.UserRole
 	err := res.UnmarshalGQL(v)
@@ -10552,6 +10677,14 @@ func (ec *executionContext) marshalOTimestamp2ᚖgithubᚗcomᚋosangᚑschool�
 		return graphql.Null
 	}
 	return v
+}
+
+func (ec *executionContext) unmarshalOUpdateSchedule2ᚖgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐUpdateSchedule(ctx context.Context, v interface{}) (*model.UpdateSchedule, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputUpdateSchedule(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalO__EnumValue2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐEnumValueᚄ(ctx context.Context, sel ast.SelectionSet, v []introspection.EnumValue) graphql.Marshaler {

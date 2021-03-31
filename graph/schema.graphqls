@@ -284,7 +284,8 @@ type Query {
   myProfile: Profile @auth(getInfo: true)
   schoolMeal(filter: SchoolMealFilter): [SchoolMeal!]!
   post(id: ObjectID!, comment: CommentFilter): Post! @auth(getInfo: true)
-  posts(categoryID: ObjectID!, offset: Int, limit: Int): [Post!]! @auth(getInfo: true)
+  posts(categoryID: ObjectID!, offset: Int, limit: Int): [Post!]!
+    @auth(getInfo: true)
   categories: [Category!]! @auth
 
   calendar(filter: CalendarFilter!): [Calendar!]!
@@ -316,6 +317,9 @@ type Mutation {
 
   addCalendar(input: NewCalendar!): ObjectID! @auth(reqPermission: ["calendar"])
   deleteCalendar(target: ObjectID!): Nothing! @auth(reqPermission: ["calendar"])
+
+  insertSchedule(input: [UpdateSchedule]!): Nothing!
+    @auth(reqPermission: ["schedule"])
 
   updateSchedule(input: UpdateSchedule!): Nothing!
     @auth(reqPermission: ["schedule"])

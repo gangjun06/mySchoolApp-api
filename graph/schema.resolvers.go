@@ -271,6 +271,25 @@ func (r *mutationResolver) DeleteCalendar(ctx context.Context, target model.Obje
 	return "", info.DeleteCalendar(primitive.ObjectID(target))
 }
 
+func (r *mutationResolver) InsertSchedule(ctx context.Context, input []*model.UpdateSchedule) (string, error) {
+	var data []*info.Schedule
+	for _, d := range input {
+		data = append(data, &info.Schedule{
+			ID:          primitive.NewObjectID(),
+			Grade:       d.Grade,
+			Class:       d.Class,
+			Dow:         d.Dow,
+			Period:      d.Period,
+			Subject:     d.Subject,
+			Teacher:     d.Teacher,
+			Description: d.Description,
+			ClassRoom:   d.ClassRoom,
+		})
+	}
+
+	return "", info.InsertSchedules(data)
+}
+
 func (r *mutationResolver) UpdateSchedule(ctx context.Context, input model.UpdateSchedule) (string, error) {
 	data := info.UpdateScheduleInput{
 		input.Grade,

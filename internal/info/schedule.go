@@ -26,6 +26,21 @@ type (
 	}
 )
 
+func InsertSchedules(input []*Schedule) error {
+	var newValue []interface{}
+
+	for _, v := range input {
+		newValue = append(newValue, v)
+	}
+
+	_, err := mongodb.Schedule.InsertMany(nil, newValue)
+	if err != nil {
+		return myerr.New(myerr.ErrServer, err.Error())
+	}
+
+	return nil
+}
+
 func UpdateSchedule(input *UpdateScheduleInput) error {
 	filter := bson.M{
 		"grade":  input.Grade,
