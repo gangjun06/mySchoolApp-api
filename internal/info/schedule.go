@@ -68,13 +68,19 @@ func UpdateSchedule(input *UpdateScheduleInput) error {
 	return nil
 }
 
-func FindSchedule(grade, class, dow uint) ([]*Schedule, error) {
+func FindSchedule(grade, class, dow uint, name string) ([]*Schedule, error) {
 	filter := bson.M{
-		"grade": grade,
-		"class": class,
-		"dow":   dow,
+		"dow": dow,
 	}
-	cursor, err := mongodb.Schedule.Find(nil, filter)
+	if name == "" {
+		filter["grade"] = grade
+		filter["class"] = class
+	} else {
+		filter["teacher"] = bson.M{"$regex": primitive.Regex{Pattern: "" + name + "", Options: "i"}}
+	}
+	cursor, err := mongodb.Schedule.Find(nil, filter, options.Find().SetSort(bson.M{
+		"period": 1,
+	}))
 	if err != nil {
 		return nil, myerr.New(myerr.ErrServer, err.Error())
 	}

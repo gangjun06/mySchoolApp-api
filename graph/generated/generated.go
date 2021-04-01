@@ -1382,9 +1382,10 @@ input UpdateSchedule {
 }
 
 input ScheduleFilter {
-  grade: Uint!
-  class: Uint!
+  grade: Uint
+  class: Uint
   dow: Uint!
+  name: String
 }
 
 input ScheduleDelFilter {
@@ -7877,7 +7878,7 @@ func (ec *executionContext) unmarshalInputScheduleFilter(ctx context.Context, ob
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("grade"))
-			it.Grade, err = ec.unmarshalNUint2uint(ctx, v)
+			it.Grade, err = ec.unmarshalOUint2ᚖuint(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -7885,7 +7886,7 @@ func (ec *executionContext) unmarshalInputScheduleFilter(ctx context.Context, ob
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("class"))
-			it.Class, err = ec.unmarshalNUint2uint(ctx, v)
+			it.Class, err = ec.unmarshalOUint2ᚖuint(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -7894,6 +7895,14 @@ func (ec *executionContext) unmarshalInputScheduleFilter(ctx context.Context, ob
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dow"))
 			it.Dow, err = ec.unmarshalNUint2uint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "name":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			it.Name, err = ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -10677,6 +10686,21 @@ func (ec *executionContext) marshalOTimestamp2ᚖgithubᚗcomᚋosangᚑschool�
 		return graphql.Null
 	}
 	return v
+}
+
+func (ec *executionContext) unmarshalOUint2ᚖuint(ctx context.Context, v interface{}) (*uint, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := model.UnmarshalUint(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOUint2ᚖuint(ctx context.Context, sel ast.SelectionSet, v *uint) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return model.MarshalUint(*v)
 }
 
 func (ec *executionContext) unmarshalOUpdateSchedule2ᚖgithubᚗcomᚋosangᚑschoolᚋbackendᚋgraphᚋmodelᚐUpdateSchedule(ctx context.Context, v interface{}) (*model.UpdateSchedule, error) {

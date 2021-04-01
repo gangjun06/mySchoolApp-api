@@ -198,9 +198,10 @@ type ScheduleDelFilter struct {
 }
 
 type ScheduleFilter struct {
-	Grade uint `json:"grade"`
-	Class uint `json:"class"`
-	Dow   uint `json:"dow"`
+	Grade *uint   `json:"grade"`
+	Class *uint   `json:"class"`
+	Dow   uint    `json:"dow"`
+	Name  *string `json:"name"`
 }
 
 type SchoolMeal struct {

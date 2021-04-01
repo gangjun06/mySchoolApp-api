@@ -500,7 +500,18 @@ func (r *queryResolver) Calendar(ctx context.Context, filter model.CalendarFilte
 }
 
 func (r *queryResolver) Schedule(ctx context.Context, filter model.ScheduleFilter) ([]*model.Schedule, error) {
-	data, err := info.FindSchedule(filter.Grade, filter.Class, filter.Dow)
+	grade, class, name := uint(0), uint(0), ""
+	if filter.Grade != nil {
+		grade = *filter.Grade
+	}
+	if filter.Class != nil {
+		class = *filter.Class
+	}
+	if filter.Name != nil {
+		name = *filter.Name
+	}
+
+	data, err := info.FindSchedule(grade, class, filter.Dow, name)
 	if err != nil {
 		return nil, err
 	}

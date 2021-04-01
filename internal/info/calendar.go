@@ -5,6 +5,7 @@ import (
 	"github.com/osang-school/backend/internal/db/mongodb"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type (
@@ -42,7 +43,9 @@ func FindCalendar(year, month uint) ([]*Calendar, error) {
 		"year":  year,
 		"month": month,
 	}
-	cursor, err := mongodb.Calendar.Find(nil, filter)
+	cursor, err := mongodb.Calendar.Find(nil, filter, options.Find().SetSort(bson.M{
+		"day": 1,
+	}))
 	if err != nil {
 		return nil, myerr.New(myerr.ErrServer, err.Error())
 	}

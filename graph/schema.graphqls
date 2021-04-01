@@ -205,9 +205,10 @@ input UpdateSchedule {
 }
 
 input ScheduleFilter {
-  grade: Uint!
-  class: Uint!
+  grade: Uint
+  class: Uint
   dow: Uint!
+  name: String
 }
 
 input ScheduleDelFilter {
