@@ -229,15 +229,6 @@ type Schedule {
   classRoom: String!
 }
 
-input EmailAliasesInput {
-  from: String!
-  to: String!
-}
-
-type EmailAliases {
-  from: String!
-  to: String!
-}
 
 enum HomepageBoard {
   Notice
@@ -281,6 +272,10 @@ type HomepageFileType {
   preview: String!
 }
 
+input UserNotificationID {
+  id: String! 
+}
+
 type Query {
   myProfile: Profile @auth(getInfo: true)
   schoolMeal(filter: SchoolMealFilter): [SchoolMeal!]!
@@ -292,8 +287,6 @@ type Query {
   calendar(filter: CalendarFilter!): [Calendar!]!
   schedule(filter: ScheduleFilter!): [Schedule!]!
 
-  emailAliases: EmailAliases @auth(getInfo: true)
-
   homepageList(filter: HomepageListFilter): [HomepageListType!]
   homepageDetail(filter: HomepageDetailFilter): HomepageDetailType
 }
@@ -301,6 +294,7 @@ type Query {
 type Mutation {
   signIn(phone: Phone!, password: String!): ProfileWithToken!
   signOut: Nothing! @auth
+  setNotificationID(input: UserNotificationID!): Nothing @auth
   verifyPhone(number: Phone!): String!
   checkVerifyPhoneCode(number: Phone!, code: String!): SignUpPhoneCode!
   setProfile(
@@ -313,7 +307,7 @@ type Mutation {
 
   createPost(input: NewPost!): ObjectID! @auth
   likePost(input: LikePostInput!): Nothing @auth
-  addComment(input: NewComment!): ObjectID! @auth
+  addComment(input: NewComment!): ObjectID! @auth(getInfo: true)
   deleteComment(postID: ObjectID!, commentID: ObjectID!): Nothing! @auth
 
   addCalendar(input: NewCalendar!): ObjectID! @auth(reqPermission: ["calendar"])
@@ -326,9 +320,6 @@ type Mutation {
     @auth(reqPermission: ["schedule"])
   deleteSchedule(target: ScheduleDelFilter!): Nothing!
     @auth(reqPermission: ["schedule"])
-
-  updateEmailAliases(input: EmailAliasesInput!): Nothing! @auth(getInfo: true)
-  deleteEmailAliases: Nothing! @auth(getInfo: true)
 }
 
 scalar Phone

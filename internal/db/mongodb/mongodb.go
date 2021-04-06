@@ -48,6 +48,9 @@ func Init() {
 	Calendar = db.Collection("calendar")
 	Schedule = db.Collection("schedule")
 
+	if !conf.Get().SetupDB {
+		return
+	}
 	CheckErr(User.Indexes().CreateOne(
 		context.Background(),
 		mongo.IndexModel{

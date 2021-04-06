@@ -6,7 +6,6 @@ package graph
 import (
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/bwmarrin/discordgo"
@@ -19,6 +18,7 @@ import (
 	"github.com/osang-school/backend/internal/info"
 	"github.com/osang-school/backend/internal/neis"
 	"github.com/osang-school/backend/internal/post"
+	"github.com/osang-school/backend/internal/send"
 	"github.com/osang-school/backend/internal/session"
 	"github.com/osang-school/backend/internal/user"
 	"github.com/osang-school/backend/internal/utils"
@@ -49,6 +49,11 @@ func (r *mutationResolver) SignOut(ctx context.Context) (string, error) {
 		return "", myerr.New(myerr.ErrServer, err.Error())
 	}
 	return "", nil
+}
+
+func (r *mutationResolver) SetNotificationID(ctx context.Context, input model.UserNotificationID) (*string, error) {
+	data := ctx.Value("data").(*session.Data)
+	return nil, user.UpdateUserNotificationID(data.ID, input.ID)
 }
 
 func (r *mutationResolver) VerifyPhone(ctx context.Context, number model.Phone) (string, error) {
@@ -242,11 +247,11 @@ func (r *mutationResolver) LikePost(ctx context.Context, input model.LikePostInp
 }
 
 func (r *mutationResolver) AddComment(ctx context.Context, input model.NewComment) (model.ObjectID, error) {
-	user := ctx.Value("data").(*session.Data)
+	userSession := ctx.Value("data").(*session.Data)
 	if category, err := post.GetCategoryByPost(primitive.ObjectID(input.Post)); err != nil {
 		return model.ObjectID(primitive.NilObjectID), err
 	} else {
-		if ok := post.CheckUserPermission("read", category, user.Role, user.Permission); !ok {
+		if ok := post.CheckUserPermission("read", category, userSession.Role, userSession.Permission); !ok {
 			return model.ObjectID(primitive.NilObjectID), myerr.New(myerr.ErrPermission, "")
 		}
 	}
@@ -254,7 +259,19 @@ func (r *mutationResolver) AddComment(ctx context.Context, input model.NewCommen
 	if input.Anon != nil {
 		anon = *input.Anon
 	}
-	id, err := post.NewComment(primitive.ObjectID(input.Post), user.ID, input.Content, anon)
+	id, err := post.NewComment(primitive.ObjectID(input.Post), userSession.ID, input.Content, anon)
+	userData := ctx.Value("user").(*user.User)
+	post, err := post.GetPost(primitive.ObjectID(input.Post), primitive.NilObjectID, true)
+	if err != nil {
+		return model.ObjectID(primitive.NilObjectID), err
+	}
+	if userData.ID != post.Author {
+		notiTitle := fmt.Sprintf("\"%s\"님이 글에 댓글을 남기셨습니다", userData.Name)
+		notiBody := utils.SplitSubN(input.Content, 30)
+		send.SendNotification(post.AuthorData.Notification, notiTitle, notiBody, map[string]string{
+			"postID": primitive.ObjectID(input.Post).Hex(),
+		})
+	}
 	return model.ObjectID(id), err
 }
 
@@ -306,37 +323,6 @@ func (r *mutationResolver) UpdateSchedule(ctx context.Context, input model.Updat
 
 func (r *mutationResolver) DeleteSchedule(ctx context.Context, target model.ScheduleDelFilter) (string, error) {
 	return "", info.DeleteSchedule(uint(target.Grade), uint(target.Class), uint(target.Dow), uint(target.Period))
-}
-
-func (r *mutationResolver) UpdateEmailAliases(ctx context.Context, input model.EmailAliasesInput) (string, error) {
-	if ok := strings.HasSuffix(input.From, "@osang.xyz"); !ok {
-		return "", myerr.New(myerr.ErrBadRequest, "invalid email format")
-	}
-	userData := ctx.Value("user").(*user.User)
-	origin := userData.EmailAliases.From
-
-	if err := user.MailAliasesUpdate(userData.ID, input.From, input.To, origin != "" && origin == input.From); err != nil {
-		return "", err
-	}
-
-	if origin != "" && origin != input.From {
-		if err := user.MailAliasesRemove(origin); err != nil {
-			return "", err
-		}
-	}
-
-	return "", nil
-}
-
-func (r *mutationResolver) DeleteEmailAliases(ctx context.Context) (string, error) {
-	userData := ctx.Value("user").(*user.User)
-	if err := user.MailAliasesRemove(userData.EmailAliases.From); err != nil {
-		return "", err
-	}
-	if err := user.MailAliasesRemoveDB(userData.ID); err != nil {
-		return "", err
-	}
-	return "", nil
 }
 
 func (r *queryResolver) MyProfile(ctx context.Context) (*model.Profile, error) {
@@ -529,14 +515,6 @@ func (r *queryResolver) Schedule(ctx context.Context, filter model.ScheduleFilte
 		})
 	}
 	return result, nil
-}
-
-func (r *queryResolver) EmailAliases(ctx context.Context) (*model.EmailAliases, error) {
-	userData := ctx.Value("user").(*user.User)
-	return &model.EmailAliases{
-		From: userData.EmailAliases.From,
-		To:   userData.EmailAliases.To,
-	}, nil
 }
 
 func (r *queryResolver) HomepageList(ctx context.Context, filter *model.HomepageListFilter) ([]*model.HomepageListType, error) {

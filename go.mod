@@ -18,6 +18,7 @@ require (
 	github.com/kr/text v0.2.0 // indirect
 	github.com/mitchellh/mapstructure v1.1.2 // indirect
 	github.com/muesli/cache2go v0.0.0-20201208071950-e3e970b4892f
+	github.com/oliveroneill/exponent-server-sdk-golang v0.0.0-20200627013714-266e8e6ee5ad // indirect
 	github.com/onsi/ginkgo v1.10.3 // indirect
 	github.com/onsi/gomega v1.7.1 // indirect
 	github.com/osang-school/data v0.0.0-20210321130103-0dc59e4b9101 // indirect

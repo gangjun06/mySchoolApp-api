@@ -58,16 +58,6 @@ type CommentFilter struct {
 	LoadOnlyComment *bool `json:"loadOnlyComment"`
 }
 
-type EmailAliases struct {
-	From string `json:"from"`
-	To   string `json:"to"`
-}
-
-type EmailAliasesInput struct {
-	From string `json:"from"`
-	To   string `json:"to"`
-}
-
 type HomepageDetailFilter struct {
 	Board HomepageBoard `json:"board"`
 	ID    uint          `json:"id"`
@@ -260,6 +250,10 @@ type UpdateSchedule struct {
 	Teacher     string `json:"teacher"`
 	Description string `json:"description"`
 	ClassRoom   string `json:"classRoom"`
+}
+
+type UserNotificationID struct {
+	ID string `json:"id"`
 }
 
 type HomepageBoard string

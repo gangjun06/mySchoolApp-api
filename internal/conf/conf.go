@@ -11,6 +11,7 @@ import (
 type Config struct {
 	JWTSecret string
 	MongoDB   string
+	SetupDB   bool
 	Server    struct {
 		Release bool
 		Port    int
@@ -31,6 +32,7 @@ type Config struct {
 		UserName string
 		Password string
 	}
+	ExpoAccessToken string
 }
 
 type DiscordConf struct {
@@ -53,6 +55,7 @@ func Init() {
 	flag.BoolVar(&conf.Server.Release, "release", parseBool(os.Getenv("SERVER_RELEASE")), "start server with release")
 	flag.IntVar(&conf.Server.Port, "port", parseInt(os.Getenv("SERVER_PORT")), "Web Sserver Port")
 	flag.StringVar(&conf.MongoDB, "mongodb", os.Getenv("DB_MONGODB"), "MongoDB ConnectURI")
+	flag.BoolVar(&conf.SetupDB, "setup_db", parseBool(os.Getenv("SETUP_DB")), "do migration db")
 
 	flag.BoolVar(&conf.CoolSMS.Enable, "coolsms_enable", parseBool(os.Getenv("COOLSMS_ENABLE")), "enable send sms")
 	flag.StringVar(&conf.CoolSMS.ApiKey, "coolsms_apikey", os.Getenv("COOLSMS_APIKEY"), "coolsms api key")
@@ -67,6 +70,8 @@ func Init() {
 	flag.StringVar(&conf.Email.Url, "mail_url", os.Getenv("EMAIL_URL"), "MailInABox url")
 	flag.StringVar(&conf.Email.UserName, "mail_username", os.Getenv("EMAIL_USERNAME"), "username")
 	flag.StringVar(&conf.Email.Password, "mail_password", os.Getenv("EMAIL_PASSWORD"), "password")
+
+	flag.StringVar(&conf.ExpoAccessToken, "expo_access_token", os.Getenv("EXPO_ACCESS_TOKEN"), "expo access token")
 
 	flag.Parse()
 

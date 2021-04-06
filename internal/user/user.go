@@ -1,16 +1,11 @@
 package user
 
 import (
-	"encoding/base64"
-	"io/ioutil"
-	"net/url"
 	"strconv"
 	"time"
 
-	"github.com/imroc/req"
 	"github.com/osang-school/backend/graph/model"
 	"github.com/osang-school/backend/graph/myerr"
-	"github.com/osang-school/backend/internal/conf"
 	"github.com/osang-school/backend/internal/db/mongodb"
 	"github.com/osang-school/backend/internal/db/redis"
 	"github.com/osang-school/backend/internal/send"
@@ -26,19 +21,16 @@ type (
 	User   struct {
 		ID           primitive.ObjectID `bson:"_id,omitempty"`
 		Permissions  []string           `bson:"permissions,omitempty"`
-		EmailAliases struct {
-			From string `bson:"from"`
-			To   string `bson:"to"`
-		} `bson:"emailAliases,omitempty"`
-		Status    Status     `bson:"status,omitempty"`
-		Name      string     `bson:"name,omitempty"`
-		Phone     string     `bson:"phone,omitempty"`
-		Password  string     `bson:"password,omitempty"`
-		Nickname  string     `bson:"nickname,omitempty"`
-		Role      Role       `bson:"role,omitempty"`
-		Student   *Student   `bson:"student,omitempty"`
-		Teacher   *Teacher   `bson:"teacher,omitempty"`
-		Officials *Officials `bson:"officials,omitempty"`
+		Status       Status             `bson:"status,omitempty"`
+		Name         string             `bson:"name,omitempty"`
+		Phone        string             `bson:"phone,omitempty"`
+		Password     string             `bson:"password,omitempty"`
+		Nickname     string             `bson:"nickname,omitempty"`
+		Notification string             `bson:"notification,omitempty"`
+		Role         Role               `bson:"role,omitempty"`
+		Student      *Student           `bson:"student,omitempty"`
+		Teacher      *Teacher           `bson:"teacher,omitempty"`
+		Officials    *Officials         `bson:"officials,omitempty"`
 	}
 	Student struct {
 		Grade  int `bson:"grade,omitempty"`
@@ -188,6 +180,18 @@ func GetUserByID(id primitive.ObjectID) (*User, error) {
 	return &result, nil
 }
 
+// GetUserByID
+func UpdateUserNotificationID(id primitive.ObjectID, noti string) error {
+	filter := bson.M{"_id": id}
+	update := bson.M{"$set": bson.M{
+		"notification": noti,
+	}}
+	if _, err := mongodb.User.UpdateOne(nil, filter, update); err != nil {
+		return myerr.New(myerr.ErrServer, err.Error())
+	}
+	return nil
+}
+
 func DetailToUnion(d interface{}) model.ProfileDetail {
 	var result model.ProfileDetail
 	switch v := d.(type) {
@@ -270,49 +274,4 @@ func UserToGqlType(u *User) *model.Profile {
 		profile.Detail = model.AnonProfile{}
 	}
 	return profile
-}
-
-func mailHeader() req.Header {
-	c := conf.Get().Email
-	return req.Header{
-		"Authorization": "Basic " + base64.StdEncoding.EncodeToString([]byte(c.UserName+":"+c.Password)),
-		"Content-Type":  "application/x-www-form-urlencoded",
-	}
-}
-
-func MailAliasesUpdate(userID primitive.ObjectID, from string, to string, override bool) error {
-	c := conf.Get().Email
-	res, err := req.Post(c.Url+"/admin/mail/aliases/add", "update_if_exists="+utils.If(override, "1", "0").(string)+"&address="+url.QueryEscape(from)+"&forwards_to="+url.QueryEscape(to), mailHeader())
-	if res.Response().StatusCode != 200 {
-		defer res.Response().Body.Close()
-		b, _ := ioutil.ReadAll(res.Response().Body)
-		return myerr.New(myerr.ErrServer, string(b))
-	}
-	_, err = mongodb.User.UpdateOne(nil, bson.M{"_id": userID}, bson.M{"$set": bson.M{"emailAliases": bson.M{"from": from, "to": to}}})
-	if err != nil {
-		return myerr.New(myerr.ErrServer, err.Error())
-	}
-	return nil
-}
-
-func MailAliasesRemove(from string) error {
-	c := conf.Get().Email
-	res, err := req.Post(c.Url+"/admin/mail/aliases/remove", "address="+url.QueryEscape(from), mailHeader())
-	if err != nil {
-		return myerr.New(myerr.ErrServer, err.Error())
-	}
-	if res.Response().StatusCode != 200 {
-		defer res.Response().Body.Close()
-		b, _ := ioutil.ReadAll(res.Response().Body)
-		return myerr.New(myerr.ErrServer, string(b))
-	}
-	return nil
-}
-
-func MailAliasesRemoveDB(userID primitive.ObjectID) error {
-	_, err := mongodb.User.UpdateOne(nil, bson.M{"_id": userID}, bson.M{"$set": bson.M{"emailAliases": nil}})
-	if err != nil {
-		return myerr.New(myerr.ErrServer, err.Error())
-	}
-	return nil
 }
