@@ -27,6 +27,8 @@ import (
 )
 
 func (r *mutationResolver) SignIn(ctx context.Context, phone model.Phone, password string) (*model.ProfileWithToken, error) {
+	ip := ctx.Value("ip").(string)
+	userAgent := ctx.Value("userAgent").(string)
 	userData, err := user.GetUserByPhone(phone)
 	if err != nil {
 		return nil, err
@@ -34,7 +36,7 @@ func (r *mutationResolver) SignIn(ctx context.Context, phone model.Phone, passwo
 	if ok := utils.CheckPassword(password, userData.Password); !ok {
 		return nil, myerr.New(myerr.ErrPasswordWrong, "")
 	}
-	token, err := session.CreateToken(userData.ID, userData.Role, userData.Permissions)
+	token, err := session.CreateToken(ip, userAgent, userData.ID, userData.Role, userData.Permissions)
 	if err != nil {
 		return nil, err
 	}
@@ -154,7 +156,9 @@ func (r *mutationResolver) SignUp(ctx context.Context, input model.SignUpInput) 
 		Detail:   user.DetailToUnion(resultDetail),
 	}
 
-	token, err := session.CreateToken(id, newUser.Role, newUser.Permissions)
+	ip := ctx.Value("ip").(string)
+	userAgent := ctx.Value("userAgent").(string)
+	token, err := session.CreateToken(ip, userAgent, id, newUser.Role, newUser.Permissions)
 	if err != nil {
 		return nil, err
 	}

@@ -25,12 +25,17 @@ type (
 		Permission []string
 		Role       user.Role
 	}
+
+	redisData struct {
+		IP, UserAgent string
+	}
 )
 
 const AccessTokenExp = time.Hour * 24 * 30 * 12
 
-func CreateToken(id primitive.ObjectID, role user.Role, permission []string) (string, error) {
+func CreateToken(ip, userAgent string, id primitive.ObjectID, role user.Role, permission []string) (string, error) {
 	randomStr := utils.CreateRandomString(8)
+	expAt := time.Now().Add(AccessTokenExp)
 	claims := &Claims{Data: Data{
 		ID:         id,
 		SessionID:  randomStr,
@@ -38,14 +43,17 @@ func CreateToken(id primitive.ObjectID, role user.Role, permission []string) (st
 		Role:       role,
 	},
 		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(AccessTokenExp).Unix(),
+			ExpiresAt: expAt.Unix(),
 		},
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	tokenString, err := token.SignedString([]byte(conf.Get().JWTSecret))
 
-	redis.C.HSet("session:"+id.Hex(), randomStr, "Y")
+	redis.C.HSet("session:"+id.Hex(), randomStr, &redisData{
+		ip, userAgent,
+	})
+	redis.C.ExpireAt("session:"+id.Hex(), expAt)
 
 	return tokenString, err
 }
@@ -59,8 +67,7 @@ func ParseToken(tokenStr string) (*Data, error) {
 	if err != nil || !token.Valid {
 		return nil, myerr.New(myerr.ErrAuth, "not valid token")
 	}
-	result, err := redis.C.HGet("session:"+claims.Data.ID.Hex(), claims.Data.SessionID).Result()
-	if err != nil || result != "Y" {
+	if _, err := redis.C.HGet("session:"+claims.Data.ID.Hex(), claims.Data.SessionID).Result(); err != nil {
 		return nil, myerr.New(myerr.ErrAuth, "not valid token")
 	}
 	return &claims.Data, nil
